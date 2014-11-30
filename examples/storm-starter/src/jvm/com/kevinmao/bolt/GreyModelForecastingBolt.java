@@ -6,10 +6,10 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
+import com.kevinmao.topology.AttackDetectionTopology;
 import org.apache.log4j.Logger;
-import storm.starter.util.TupleHelpers;
 
-import java.util.HashMap;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -17,37 +17,27 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(TextPcapDecoderBolt.class);
     private OutputCollector collector;
 
-    //private static final int DEFAULT_EMIT_FREQUENCY_IN_SECONDS = 60;
-
-    //private final int emitFrequencyInSeconds;
-    private static final ArrayList<Double> DEFAULT_EMPTY_INT_ARRAY = new ArrayList<Double>();
-    private static final int DEFAULT_K = 0;
-
+    private static final ArrayList<Double> DEFAULT_EMPTY_DOUBLE_ARRAY = new ArrayList<Double>();
     private ArrayList<Double> origSeriesOfSYN;
-    private int k;
 
-    public GreyModelForecastingBolt(){ this(DEFAULT_EMPTY_INT_ARRAY, DEFAULT_K); }
+    public GreyModelForecastingBolt(){ this(DEFAULT_EMPTY_DOUBLE_ARRAY); }
 
-    public GreyModelForecastingBolt(ArrayList<Double> origSeriesOfSYN, int k) {
+    public GreyModelForecastingBolt(ArrayList<Double> origSeriesOfSYN) {
         this.origSeriesOfSYN = origSeriesOfSYN;
-        this.k = k;
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-
+        this.collector = collector;
     }
 
     @Override
     public void execute(Tuple tuple) {
-        if(TupleHelpers.isTickTuple(tuple)) {
-            LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1)");
-            calcGM(origSeriesOfSYN, k);
-        }
-        else {
-
-        }
+        LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1)");
+        int timeIndex = Integer.parseInt(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD).toString());
+        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex)));
+        collector.ack(tuple);
     }
 
     private double calcGM(ArrayList<Double> origSeriesOfSYN, int k) {
@@ -156,16 +146,6 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-//        declarer.declare(new Fields("all", "the", "fields"));
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-        return new HashMap<String, Object>();
-    }
-
-    @Override
-    public void cleanup(){
-
+        declarer.declare(new Fields(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD));
     }
 }

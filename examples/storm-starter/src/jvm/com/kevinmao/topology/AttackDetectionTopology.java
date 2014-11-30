@@ -6,6 +6,7 @@ import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.AuthorizationException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
+import com.kevinmao.bolt.GreyModelForecastingBolt;
 import com.kevinmao.bolt.KafkaPacketRecordDecoderBolt;
 import com.kevinmao.bolt.PacketRecordCounterBolt;
 import storm.kafka.KafkaSpout;
@@ -29,6 +30,9 @@ public class AttackDetectionTopology {
     private static final double COUNTER_BOLT_COUNTING_TIME_WINDOW = 10.0;
     public static final String COUNTER_BOLT_TIME_INDEX_FIELD = "timeIndex";
     public static final String COUNTER_BOLT_PACKET_COUNT_FIELD = "packetCount";
+
+    private static final int GREY_MODEL_BOLT_PARALLELISM = 1;
+    public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
 
     //k upstream
     public AttackDetectionTopology() {
@@ -73,7 +77,7 @@ public class AttackDetectionTopology {
         builder.setBolt(COUNTER_BOLT_ID, counterBolt, COUNTER_BOLT_PARALLELISM).localOrShuffleGrouping(DECODER_BOLT_ID);
 
         //Grey Model Forecasting Bolt Configuration
-
+        GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt();
         //Cumulative Sum Aggregation Bolt Configuration
 
         //Attack Detector Bolt Configuration
