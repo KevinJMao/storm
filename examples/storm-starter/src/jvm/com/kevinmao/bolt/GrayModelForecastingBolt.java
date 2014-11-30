@@ -13,16 +13,16 @@ import org.apache.log4j.Logger;
 import java.util.Map;
 import java.util.ArrayList;
 
-public class GreyModelForecastingBolt extends BaseRichBolt {
-    private static final Logger LOG = Logger.getLogger(TextPcapDecoderBolt.class);
+public class GrayModelForecastingBolt extends BaseRichBolt {
+    private static final Logger LOG = Logger.getLogger(GrayModelForecastingBolt.class);
     private OutputCollector collector;
 
     private static final ArrayList<Double> DEFAULT_EMPTY_DOUBLE_ARRAY = new ArrayList<Double>();
     private ArrayList<Double> origSeriesOfSYN;
 
-    public GreyModelForecastingBolt(){ this(DEFAULT_EMPTY_DOUBLE_ARRAY); }
+    public GrayModelForecastingBolt(){ this(DEFAULT_EMPTY_DOUBLE_ARRAY); }
 
-    public GreyModelForecastingBolt(ArrayList<Double> origSeriesOfSYN) {
+    public GrayModelForecastingBolt(ArrayList<Double> origSeriesOfSYN) {
         this.origSeriesOfSYN = origSeriesOfSYN;
     }
 

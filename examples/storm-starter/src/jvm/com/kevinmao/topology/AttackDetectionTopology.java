@@ -2,9 +2,6 @@ package com.kevinmao.topology;
 
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
-import backtype.storm.generated.AlreadyAliveException;
-import backtype.storm.generated.AuthorizationException;
-import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
 import com.kevinmao.bolt.*;
 import storm.kafka.KafkaSpout;
@@ -82,7 +79,7 @@ public class AttackDetectionTopology {
         builder.setBolt(COUNTER_BOLT_ID, counterBolt, COUNTER_BOLT_PARALLELISM).localOrShuffleGrouping(DECODER_BOLT_ID);
 
         //Grey Model Forecasting Bolt Configuration
-        GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt();
+        GrayModelForecastingBolt greyModelBolt = new GrayModelForecastingBolt();
         builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         //Cumulative Sum Aggregation Bolt Configuration

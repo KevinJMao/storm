@@ -13,7 +13,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class CumulativeSumAggregationBolt extends BaseRichBolt {
-    private static final Logger LOG = Logger.getLogger(TextPcapDecoderBolt.class);
+    private static final Logger LOG = Logger.getLogger(CumulativeSumAggregationBolt.class);
     private OutputCollector collector;
 
     private static final int DEFAULT_EMIT_FREQUENCY_IN_SECONDS = 60;
