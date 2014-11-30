@@ -7,6 +7,7 @@ import backtype.storm.generated.AuthorizationException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
 import com.kevinmao.bolt.KafkaPacketRecordDecoderBolt;
+import com.kevinmao.bolt.PacketRecordCounterBolt;
 import storm.kafka.KafkaSpout;
 import backtype.storm.topology.TopologyBuilder;
 import org.apache.log4j.Logger;
@@ -16,11 +17,20 @@ import storm.kafka.ZkHosts;
 public class AttackDetectionTopology {
     private static final String TOPOLOGY_NAME = "Grey Model Cumulative Sum Attack Detection Topology";
     private static final Logger LOG = Logger.getLogger(AttackDetectionTopology.class);
+
     private static final String ZOOKEEPER_HOSTS = "zookeeper1.kevinmao.com:2181";
     private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddosdata.tovictim.text";
     private static final int SPOUT_PARALLELISM = 2;
-    private static final int DECODER_BOLT_PARALLELISM = 4;
 
+    private static final int DECODER_BOLT_PARALLELISM = 4;
+    public static final String DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD = "packetRecord";
+
+    private static final int COUNTER_BOLT_PARALLELISM = 1;
+    private static final double COUNTER_BOLT_COUNTING_TIME_WINDOW = 10.0;
+    public static final String COUNTER_BOLT_TIME_INDEX_FIELD = "timeIndex";
+    public static final String COUNTER_BOLT_PACKET_COUNT_FIELD = "packetCount";
+
+    //k upstream
     public AttackDetectionTopology() {
     }
 
@@ -59,6 +69,8 @@ public class AttackDetectionTopology {
         builder.setBolt(DECODER_BOLT_ID, decoderBolt, DECODER_BOLT_PARALLELISM).localOrShuffleGrouping(SPOUT_ID);
 
         //Packet Record Counter Bolt Configuration
+        PacketRecordCounterBolt counterBolt = new PacketRecordCounterBolt(COUNTER_BOLT_COUNTING_TIME_WINDOW);
+        builder.setBolt(COUNTER_BOLT_ID, counterBolt, COUNTER_BOLT_PARALLELISM).localOrShuffleGrouping(DECODER_BOLT_ID);
 
         //Grey Model Forecasting Bolt Configuration
 

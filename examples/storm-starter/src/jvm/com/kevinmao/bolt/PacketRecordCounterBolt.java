@@ -6,6 +6,9 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
+import com.kevinmao.topology.AttackDetectionTopology;
+import com.kevinmao.util.Packet;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
@@ -13,11 +16,17 @@ import java.util.Map;
 public class PacketRecordCounterBolt extends BaseRichBolt {
 
     private static final Logger LOG = Logger.getLogger(PacketRecordCounterBolt.class);
-    private static final double DEFAULT_TIME_WINDOW = 10.0;
+    private double countingTimeWindow;
     private OutputCollector collector;
+    private int timeIndex;
+    private long packetCount;
+    private double nextEmit;
 
-    public PacketRecordCounterBolt() {
-
+    public PacketRecordCounterBolt(double countingTimeWindow) {
+        this.countingTimeWindow = countingTimeWindow;
+        this.timeIndex = 1;
+        packetCount = 0;
+        nextEmit = countingTimeWindow;
     }
 
     @Override
@@ -37,11 +46,21 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-
+        Packet record = (Packet) input.getValueByField(AttackDetectionTopology.DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD);
+        collector.ack(input);
+        if(record.getTimestamp() >= nextEmit) {
+            collector.emit(new Values(timeIndex, packetCount));
+            timeIndex++;
+            nextEmit += countingTimeWindow;
+            packetCount = 0;
+        } else {
+            packetCount++;
+        }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("packetCounts"));
+        declarer.declare(new Fields(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD,
+                AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD));
     }
 }

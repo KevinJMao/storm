@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.kevinmao.topology.AttackDetectionTopology;
 import com.kevinmao.util.Packet;
 import org.apache.log4j.Logger;
 
@@ -62,6 +63,6 @@ public class KafkaPacketRecordDecoderBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields("packetCounts"));
+        declarer.declare(new Fields(AttackDetectionTopology.DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD));
     }
 }
