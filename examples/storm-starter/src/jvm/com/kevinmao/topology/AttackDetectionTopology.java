@@ -6,6 +6,7 @@ import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.AuthorizationException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
+import com.kevinmao.bolt.KafkaPacketRecordDecoderBolt;
 import storm.kafka.KafkaSpout;
 import backtype.storm.topology.TopologyBuilder;
 import org.apache.log4j.Logger;
@@ -18,6 +19,7 @@ public class AttackDetectionTopology {
     private static final String ZOOKEEPER_HOSTS = "zookeeper1.kevinmao.com:2181";
     private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddosdata.tovictim.text";
     private static final int SPOUT_PARALLELISM = 2;
+    private static final int DECODER_BOLT_PARALLELISM = 4;
 
     public AttackDetectionTopology() {
     }
@@ -52,19 +54,21 @@ public class AttackDetectionTopology {
                 "attackDetectionTopology-id");
         builder.setSpout(SPOUT_ID, new KafkaSpout(spout_conf), SPOUT_PARALLELISM);
 
-        return builder.createTopology();
-
         //Kafka Packet Record Decoder Bolt Configuration
+        KafkaPacketRecordDecoderBolt decoderBolt = new KafkaPacketRecordDecoderBolt();
+        builder.setBolt(DECODER_BOLT_ID, decoderBolt, DECODER_BOLT_PARALLELISM).localOrShuffleGrouping(SPOUT_ID);
 
         //Packet Record Counter Bolt Configuration
 
         //Grey Model Forecasting Bolt Configuration
 
-        //Cumulative Sum Bolt Configuration
+        //Cumulative Sum Aggregation Bolt Configuration
 
         //Attack Detector Bolt Configuration
 
         //Graphite Writer Bolt Configuration
+
+        return builder.createTopology();
     }
 
     private Config createTopologyConfig() {
