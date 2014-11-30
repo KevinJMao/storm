@@ -6,9 +6,7 @@ import backtype.storm.generated.AlreadyAliveException;
 import backtype.storm.generated.AuthorizationException;
 import backtype.storm.generated.InvalidTopologyException;
 import backtype.storm.generated.StormTopology;
-import com.kevinmao.bolt.GreyModelForecastingBolt;
-import com.kevinmao.bolt.KafkaPacketRecordDecoderBolt;
-import com.kevinmao.bolt.PacketRecordCounterBolt;
+import com.kevinmao.bolt.*;
 import storm.kafka.KafkaSpout;
 import backtype.storm.topology.TopologyBuilder;
 import org.apache.log4j.Logger;
@@ -34,7 +32,14 @@ public class AttackDetectionTopology {
     private static final int GREY_MODEL_BOLT_PARALLELISM = 1;
     public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
 
-    //k upstream
+    private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;
+    public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";
+
+    private static final int ATTACK_DETECTOR_BOLT_PARALLELISM = 1;
+    public static final String ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD = "attackDetected";
+
+    private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
+
     public AttackDetectionTopology() {
     }
 
@@ -81,8 +86,12 @@ public class AttackDetectionTopology {
         builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         //Cumulative Sum Aggregation Bolt Configuration
+        CumulativeSumAggregationBolt cuSumBolt = new CumulativeSumAggregationBolt();
+        builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
 
         //Attack Detector Bolt Configuration
+        AttackDetectorBolt detectorBolt = new AttackDetectorBolt();
+        builder.setBolt(ATTACK_DETECTOR_BOLT_ID, detectorBolt, ATTACK_DETECTOR_BOLT_PARALLELISM).localOrShuffleGrouping(CUSUM_BOLT_ID);
 
         //Graphite Writer Bolt Configuration
 
