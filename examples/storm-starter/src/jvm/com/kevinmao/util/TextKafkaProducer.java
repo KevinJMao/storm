@@ -1,11 +1,10 @@
-package com.kevinmao;
+package com.kevinmao.util;
 
 import java.io.File;
 
 import kafka.javaapi.producer.Producer;
 import kafka.producer.ProducerConfig;
 
-import java.nio.file.FileSystems;
 import java.util.Properties;
 import java.io.*;
 import java.util.Scanner;
