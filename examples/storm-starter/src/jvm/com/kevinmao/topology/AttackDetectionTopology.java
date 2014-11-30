@@ -78,6 +78,8 @@ public class AttackDetectionTopology {
 
         //Grey Model Forecasting Bolt Configuration
         GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt();
+        builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
+
         //Cumulative Sum Aggregation Bolt Configuration
 
         //Attack Detector Bolt Configuration
