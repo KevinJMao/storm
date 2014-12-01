@@ -52,19 +52,19 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         /*
          * Step 2: generate 1-AGO
          */
-        ArrayList<Double> oneAgo = new ArrayList<Double>(arraySize+1);
+        double[] oneAgo = new double[arraySize+1];
         double sum = 0;
-        for(int i = 0; i < arraySize+1; i++) {
+        for(int i = 0; i <= arraySize; i++) {
             sum += origSeriesOfSYN.get(i);
-            oneAgo.add(sum);
+            oneAgo[i] = sum;
         }
 
         /*
          * Step 3: mean generation of consecutive neighbors
          */
-        ArrayList<Double> meanGeneration = new ArrayList<Double>(arraySize);
+        double[] meanGeneration = new double[arraySize];
         for(int i = 0; i < arraySize; i++) {
-            meanGeneration.set(i, (oneAgo.get(i)+oneAgo.get(i+1))/2);
+            meanGeneration[i] = (oneAgo[i]+oneAgo[i+1])/2;
         }
 
         /*
@@ -77,7 +77,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
                 if(j == 1)
                     B[i][j] = 1;
                 else
-                    B[i][j] = -meanGeneration.get(i);
+                    B[i][j] = -meanGeneration[i];
             }
         }
 
@@ -144,7 +144,8 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         /*
          * Step 5: calculate the desired prediction output
          */
-        result = (1 - Math.exp(-a)) * ((origSeriesOfSYN.get(0) - b/a) * Math.exp(-a*k));
+        if (!(Double.isNaN(a) && Double.isNaN(b)))
+            result = (1 - Math.exp(-a)) * ((origSeriesOfSYN.get(0) - b/a) * Math.exp(-a*k));
 
         return result;
     }
