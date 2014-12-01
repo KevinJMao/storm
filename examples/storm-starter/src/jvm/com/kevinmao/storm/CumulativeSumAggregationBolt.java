@@ -66,3 +66,13 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         declarer.declare(new Fields(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD));
     }
 }
+
+class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    public CumulativeSumAggregationGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+        super(graphiteServerHostname, graphiteServerPortNumber);
+    }
+    @Override
+    public void execute(Tuple input) {
+
+    }
+}

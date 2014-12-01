@@ -61,9 +61,13 @@ public class AttackDetectionTopology {
         String SPOUT_ID = "attk-KAFKA_SPOUT";
         String DECODER_BOLT_ID = "attk-PACKET_DECODER_BOLT";
         String COUNTER_BOLT_ID = "attk-PACKET_COUNTER_BOLT";
-        String GREY_MODEL_BOLT_ID = "attk-GREY_MODEL_BOLT";
+        String COUNTER_BOLT_GRAPHITE_ID = "attk-PACKET_COUNTER_GRAPHITE_BOLT";
+        String GRAY_MODEL_BOLT_ID = "attk-GRAY_MODEL_BOLT";
+        String GRAY_MODEL_BOLT_GRAPHITE_ID = "attk-GRAY_MODEL_GRAPHITE_BOLT";
         String CUSUM_BOLT_ID = "attk-CUSUM_BOLT";
+        String CUSUM_BOLT_GRAPHITE_ID = "attk-CUSUM_GRAPHITE_BOLT";
         String ATTACK_DETECTOR_BOLT_ID = "attk-ATTACK_DETECT_BOLT";
+        String ATTACK_DETECTOR_BOLT_GRAPHITE_ID = "attk-ATTACK_DETECT_GRAPHITE_BOLT";
         String GRAPHITE_WRITER_BOLT_ID = "attk-GRAPHITE_WRITER_BOLT";
 
         //Kafka Spout Configuration
@@ -81,21 +85,33 @@ public class AttackDetectionTopology {
         PacketRecordCounterBolt counterBolt = new PacketRecordCounterBolt(COUNTER_BOLT_COUNTING_TIME_WINDOW);
         builder.setBolt(COUNTER_BOLT_ID, counterBolt, COUNTER_BOLT_PARALLELISM).localOrShuffleGrouping(DECODER_BOLT_ID);
 
+        PacketRecordCounterGraphiteWriterBolt counterBoltGraphiteWriter =
+                new PacketRecordCounterGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+        builder.setBolt(COUNTER_BOLT_GRAPHITE_ID, counterBoltGraphiteWriter, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
+
         //Grey Model Forecasting Bolt Configuration
         GrayModelForecastingBolt greyModelBolt = new GrayModelForecastingBolt();
-        builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
+        builder.setBolt(GRAY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
+
+        GrayModelForecastingGraphiteWriterBolt grayModelGraphiteBolt =
+                new GrayModelForecastingGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+        builder.setBolt(GRAY_MODEL_BOLT_GRAPHITE_ID, grayModelGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(GRAY_MODEL_BOLT_ID);
 
         //Cumulative Sum Aggregation Bolt Configuration
         CumulativeSumAggregationBolt cuSumBolt = new CumulativeSumAggregationBolt();
-        builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
+        builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GRAY_MODEL_BOLT_ID);
+
+        CumulativeSumAggregationGraphiteWriterBolt cuSumGraphiteBolt =
+                new CumulativeSumAggregationGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+        builder.setBolt(CUSUM_BOLT_GRAPHITE_ID, cuSumGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(CUSUM_BOLT_ID);
 
         //Attack Detector Bolt Configuration
         AttackDetectorBolt detectorBolt = new AttackDetectorBolt(ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE);
         builder.setBolt(ATTACK_DETECTOR_BOLT_ID, detectorBolt, ATTACK_DETECTOR_BOLT_PARALLELISM).localOrShuffleGrouping(CUSUM_BOLT_ID);
 
-        //Graphite Writer Bolt Configuration
-//        GraphiteWriterBoltBase graphiteBolt = new GraphiteWriterBoltBase(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
-//        builder.setBolt(GRAPHITE_WRITER_BOLT_ID, graphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(ATTACK_DETECTOR_BOLT_ID);
+        AttackDetectorGraphiteWriterBolt detectorGraphiteBolt =
+                new AttackDetectorGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+        builder.setBolt(ATTACK_DETECTOR_BOLT_GRAPHITE_ID, detectorGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(ATTACK_DETECTOR_BOLT_ID);
 
         return builder.createTopology();
     }

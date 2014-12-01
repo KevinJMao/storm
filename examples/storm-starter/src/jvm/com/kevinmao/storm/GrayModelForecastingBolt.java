@@ -151,3 +151,13 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
                 AttackDetectionTopology.GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD));
     }
 }
+
+class GrayModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    public GrayModelForecastingGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+        super(graphiteServerHostname, graphiteServerPortNumber);
+    }
+    @Override
+    public void execute(Tuple input) {
+
+    }
+}

@@ -70,6 +70,9 @@ class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
     }
     @Override
     public void execute(Tuple input) {
-
+        Long actualPacketCount = Long.parseLong(input.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
+        Long currentTimeSecs = System.currentTimeMillis() / 1000;
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", actualPacketCount.toString() , currentTimeSecs);
+        super.collector.ack(input);
     }
 }
