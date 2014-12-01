@@ -64,3 +64,13 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
                 AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD));
     }
 }
+
+class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    public PacketRecordCounterGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+        super(graphiteServerHostname, graphiteServerPortNumber);
+    }
+    @Override
+    public void execute(Tuple input) {
+
+    }
+}
