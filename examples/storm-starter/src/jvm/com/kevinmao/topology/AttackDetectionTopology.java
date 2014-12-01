@@ -28,6 +28,7 @@ public class AttackDetectionTopology {
 
     private static final int GREY_MODEL_BOLT_PARALLELISM = 1;
     public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
+    public static final String GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
 
     private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;
     public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";

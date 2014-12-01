@@ -15,7 +15,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class AttackDetectorBolt extends BaseRichBolt {
-    private static final Logger LOG = Logger.getLogger(TextPcapDecoderBolt.class);
+    private static final Logger LOG = Logger.getLogger(AttackDetectorBolt.class);
     private OutputCollector collector;
 
     private double detectionThreshold;

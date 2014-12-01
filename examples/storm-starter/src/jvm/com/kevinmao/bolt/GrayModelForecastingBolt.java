@@ -17,12 +17,12 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GrayModelForecastingBolt.class);
     private OutputCollector collector;
 
-    private static final ArrayList<Double> DEFAULT_EMPTY_DOUBLE_ARRAY = new ArrayList<Double>();
-    private ArrayList<Double> origSeriesOfSYN;
+    private static final ArrayList<Long> DEFAULT_EMPTY_DOUBLE_ARRAY = new ArrayList<Long>();
+    private ArrayList<Long> origSeriesOfSYN;
 
     public GrayModelForecastingBolt(){ this(DEFAULT_EMPTY_DOUBLE_ARRAY); }
 
-    public GrayModelForecastingBolt(ArrayList<Double> origSeriesOfSYN) {
+    public GrayModelForecastingBolt(ArrayList<Long> origSeriesOfSYN) {
         this.origSeriesOfSYN = origSeriesOfSYN;
     }
 
@@ -36,11 +36,13 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1)");
         int timeIndex = Integer.parseInt(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD).toString());
-        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex)));
+        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
+        origSeriesOfSYN.add(actualPacketCount);
+        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount));
         collector.ack(tuple);
     }
 
-    private double calcGM(ArrayList<Double> origSeriesOfSYN, int k) {
+    private double calcGM(ArrayList<Long> origSeriesOfSYN, int k) {
         double result = 0;
         int arraySize = origSeriesOfSYN.size()-1;
 
@@ -146,6 +148,7 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD));
+        declarer.declare(new Fields(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD,
+                AttackDetectionTopology.GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD));
     }
 }
