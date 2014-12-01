@@ -63,7 +63,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
          * Step 3: mean generation of consecutive neighbors
          */
         ArrayList<Double> meanGeneration = new ArrayList<Double>(arraySize);
-        for(int i = 0; i < arraySize; i++) {
+        for(int i = 0; i < arraySize - 1; i++) {
             meanGeneration.set(i, (oneAgo.get(i)+oneAgo.get(i+1))/2);
         }
 
@@ -163,7 +163,7 @@ class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     }
     @Override
     public void execute(Tuple input) {
-        Long greyForecastedValue = Long.parseLong(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
+        Double greyForecastedValue = Double.parseDouble(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);

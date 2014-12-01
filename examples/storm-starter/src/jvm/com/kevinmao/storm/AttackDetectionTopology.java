@@ -78,6 +78,7 @@ public class AttackDetectionTopology {
                 SPOUT_INPUT_KAFKA_TOPIC,
                 "/attk-kafka_spout",
                 "attackDetectionTopology-id");
+        spout_conf.forceFromStart = true;
         builder.setSpout(SPOUT_ID, new KafkaSpout(spout_conf), SPOUT_PARALLELISM);
 
         //Kafka Packet Record Decoder Bolt Configuration
