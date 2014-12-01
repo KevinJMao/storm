@@ -1,10 +1,9 @@
-package com.kevinmao.bolt;
+package com.kevinmao.storm;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
-import backtype.storm.tuple.Tuple;
 import com.google.common.base.Throwables;
 import com.kevinmao.graphite.GraphiteAdapter;
 import com.kevinmao.graphite.GraphiteConnectionAttemptFailure;

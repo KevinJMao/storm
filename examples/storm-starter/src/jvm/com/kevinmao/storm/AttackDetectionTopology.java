@@ -1,9 +1,8 @@
-package com.kevinmao.topology;
+package com.kevinmao.storm;
 
 import backtype.storm.Config;
 import backtype.storm.StormSubmitter;
 import backtype.storm.generated.StormTopology;
-import com.kevinmao.bolt.*;
 import storm.kafka.KafkaSpout;
 import backtype.storm.topology.TopologyBuilder;
 import org.apache.log4j.Logger;

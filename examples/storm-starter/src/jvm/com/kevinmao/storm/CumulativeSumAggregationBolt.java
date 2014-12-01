@@ -1,4 +1,4 @@
-package com.kevinmao.bolt;
+package com.kevinmao.storm;
 
 import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
@@ -6,12 +6,9 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import com.kevinmao.topology.AttackDetectionTopology;
 import org.apache.log4j.Logger;
-import storm.starter.util.TupleHelpers;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.Map;
 
 public class CumulativeSumAggregationBolt extends BaseRichBolt {
