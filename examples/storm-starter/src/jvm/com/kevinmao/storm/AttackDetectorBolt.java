@@ -42,3 +42,13 @@ public class AttackDetectorBolt extends BaseRichBolt {
         declarer.declare(new Fields(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD));
     }
 }
+
+class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    public AttackDetectorGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+        super(graphiteServerHostname, graphiteServerPortNumber);
+    }
+    @Override
+    public void execute(Tuple input) {
+
+    }
+}

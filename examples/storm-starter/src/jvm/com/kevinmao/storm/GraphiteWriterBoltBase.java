@@ -16,7 +16,8 @@ import java.util.Map;
 public abstract class GraphiteWriterBoltBase extends BaseRichBolt {
 
     private static final Logger LOG = Logger.getLogger(GraphiteWriterBoltBase.class);
-    private OutputCollector collector;
+    public static final String GRAPHITE_PREFIX = "ddos.output";
+    protected OutputCollector collector;
     private String graphiteServerHostname;
     private int graphiteServerPortNumber;
     private GraphiteAdapter graphiteAdapter;
