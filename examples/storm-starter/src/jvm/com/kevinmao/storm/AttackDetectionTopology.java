@@ -93,11 +93,11 @@ public class AttackDetectionTopology {
         builder.setBolt(COUNTER_BOLT_GRAPHITE_ID, counterBoltGraphiteWriter, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         //Grey Model Forecasting Bolt Configuration
-        GrayModelForecastingBolt greyModelBolt = new GrayModelForecastingBolt();
+        GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt();
         builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
-        GrayModelForecastingGraphiteWriterBolt grayModelGraphiteBolt =
-                new GrayModelForecastingGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+        GreyModelForecastingGraphiteWriterBolt grayModelGraphiteBolt =
+                new GreyModelForecastingGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
         builder.setBolt(GREY_MODEL_BOLT_GRAPHITE_ID, grayModelGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
 
         //Cumulative Sum Aggregation Bolt Configuration

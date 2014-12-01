@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.kevinmao.graphite.GraphiteCodec;
 import com.kevinmao.util.Packet;
 import org.apache.log4j.Logger;
 
@@ -77,7 +78,7 @@ class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Long actualPacketCount = Long.parseLong(input.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", actualPacketCount.toString() , timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", GraphiteCodec.format(actualPacketCount) , timestamp);
         super.collector.ack(input);
     }
 }

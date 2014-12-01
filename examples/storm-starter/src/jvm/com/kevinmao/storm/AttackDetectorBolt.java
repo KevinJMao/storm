@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.kevinmao.graphite.GraphiteCodec;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
@@ -54,7 +55,7 @@ class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
         boolean attackDetector = Boolean.parseBoolean(input.getValueByField(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD).toString());
         Long attackValue = attackDetector ? -100L : 100L;
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", attackValue.toString() , timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(attackValue), timestamp);
         super.collector.ack(input);
     }
 }

@@ -7,18 +7,19 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.kevinmao.graphite.GraphiteCodec;
 import org.apache.log4j.Logger;
 
 import java.util.Map;
 import java.util.ArrayList;
 
-public class GrayModelForecastingBolt extends BaseRichBolt {
-    private static final Logger LOG = Logger.getLogger(GrayModelForecastingBolt.class);
+public class GreyModelForecastingBolt extends BaseRichBolt {
+    private static final Logger LOG = Logger.getLogger(GreyModelForecastingBolt.class);
     private OutputCollector collector;
 
     private ArrayList<Long> origSeriesOfSYN;
 
-    public GrayModelForecastingBolt() {
+    public GreyModelForecastingBolt() {
         this.origSeriesOfSYN = new ArrayList<Long>();
     }
 
@@ -152,15 +153,15 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     }
 }
 
-class GrayModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
-    public GrayModelForecastingGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    public GreyModelForecastingGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
         super(graphiteServerHostname, graphiteServerPortNumber);
     }
     @Override
     public void execute(Tuple input) {
         Long greyForecastedValue = Long.parseLong(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", greyForecastedValue.toString() , timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);
     }
 }

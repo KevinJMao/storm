@@ -7,6 +7,7 @@ import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
+import com.kevinmao.graphite.GraphiteCodec;
 import org.apache.log4j.Logger;
 
 import java.util.ArrayList;
@@ -103,7 +104,7 @@ class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase 
     public void execute(Tuple input) {
         Long cuSumValues = Long.parseLong(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", cuSumValues.toString() , timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(cuSumValues), timestamp);
         super.collector.ack(input);
     }
 }
