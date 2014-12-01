@@ -33,8 +33,10 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
         LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1) to predict SYN traffic");
         int timeIndex = Integer.parseInt(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD).toString());
         long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
+        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+
         origSeriesOfSYN.add(actualPacketCount);
-        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount));
+        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount, timestamp));
         collector.ack(tuple);
     }
 
@@ -145,7 +147,8 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD,
-                AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD));
+                AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD,
+                AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }
 
@@ -155,6 +158,9 @@ class GrayModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     }
     @Override
     public void execute(Tuple input) {
-
+        Long greyForecastedValue = Long.parseLong(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
+        Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", greyForecastedValue.toString() , timestamp);
+        super.collector.ack(input);
     }
 }

@@ -29,17 +29,19 @@ public class AttackDetectorBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
+        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         collector.ack(tuple);
         if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString()) > detectionThreshold) {
-            collector.emit(new Values(true));
+            collector.emit(new Values(true, timestamp));
         } else {
-            collector.emit(new Values(false));
+            collector.emit(new Values(false, timestamp));
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD));
+        declarer.declare(new Fields(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD,
+                AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }
 
@@ -49,6 +51,10 @@ class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
     }
     @Override
     public void execute(Tuple input) {
-
+        boolean attackDetector = Boolean.parseBoolean(input.getValueByField(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD).toString());
+        Long attackValue = attackDetector ? -100L : 100L;
+        Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", attackValue.toString() , timestamp);
+        super.collector.ack(input);
     }
 }

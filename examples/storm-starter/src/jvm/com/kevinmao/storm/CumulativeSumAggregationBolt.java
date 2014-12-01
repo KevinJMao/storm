@@ -42,7 +42,9 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         double grayForecastedCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         grayModelForecastedOutput.add(grayForecastedCount);
 
-        collector.emit(new Values(calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput)));
+        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+
+        collector.emit(new Values(calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput), timestamp));
         collector.ack(tuple);
     }
 
@@ -88,7 +90,8 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD));
+        declarer.declare(new Fields(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD,
+                AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }
 
@@ -98,6 +101,9 @@ class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase 
     }
     @Override
     public void execute(Tuple input) {
-
+        Long cuSumValues = Long.parseLong(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
+        Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", cuSumValues.toString() , timestamp);
+        super.collector.ack(input);
     }
 }
