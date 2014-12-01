@@ -6,6 +6,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import com.kevinmao.topology.AttackDetectionTopology;
 import org.apache.log4j.Logger;
 import storm.starter.util.TupleHelpers;
 
@@ -36,17 +37,11 @@ public class AttackDetectorBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        if(TupleHelpers.isTickTuple(tuple)) {
-
-        }
-        else {
-
-        }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-//        declarer.declare(new Fields("all", "the", "fields"));
+        declarer.declare(new Fields(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD));
     }
 
     @Override
