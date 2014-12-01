@@ -4,29 +4,25 @@ import backtype.storm.task.OutputCollector;
 import backtype.storm.task.TopologyContext;
 import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
-import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
-import backtype.storm.tuple.Values;
 import com.google.common.base.Throwables;
 import com.kevinmao.graphite.GraphiteAdapter;
 import com.kevinmao.graphite.GraphiteConnectionAttemptFailure;
-import com.kevinmao.topology.AttackDetectionTopology;
-import com.kevinmao.util.Packet;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.Map;
 
-public class GraphiteWriterBolt extends BaseRichBolt {
+public abstract class GraphiteWriterBoltBase extends BaseRichBolt {
 
-    private static final Logger LOG = Logger.getLogger(GraphiteWriterBolt.class);
+    private static final Logger LOG = Logger.getLogger(GraphiteWriterBoltBase.class);
     private OutputCollector collector;
     private String graphiteServerHostname;
     private int graphiteServerPortNumber;
     private GraphiteAdapter graphiteAdapter;
 
-    public GraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
+    public GraphiteWriterBoltBase(String graphiteServerHostname, int graphiteServerPortNumber) {
         this.graphiteServerHostname = graphiteServerHostname;
         this.graphiteServerPortNumber = graphiteServerPortNumber;
     }
@@ -34,11 +30,6 @@ public class GraphiteWriterBolt extends BaseRichBolt {
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
         this.collector = collector;
-    }
-
-    @Override
-    public void execute(Tuple input) {
-        //TODO: Implement
     }
 
     @Override

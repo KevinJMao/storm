@@ -95,8 +95,8 @@ public class AttackDetectionTopology {
         builder.setBolt(ATTACK_DETECTOR_BOLT_ID, detectorBolt, ATTACK_DETECTOR_BOLT_PARALLELISM).localOrShuffleGrouping(CUSUM_BOLT_ID);
 
         //Graphite Writer Bolt Configuration
-        GraphiteWriterBolt graphiteBolt = new GraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
-        builder.setBolt(GRAPHITE_WRITER_BOLT_ID, graphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(ATTACK_DETECTOR_BOLT_ID);
+//        GraphiteWriterBoltBase graphiteBolt = new GraphiteWriterBoltBase(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
+//        builder.setBolt(GRAPHITE_WRITER_BOLT_ID, graphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(ATTACK_DETECTOR_BOLT_ID);
 
         return builder.createTopology();
     }
