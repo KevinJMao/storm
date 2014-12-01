@@ -38,25 +38,27 @@ public class KafkaPacketRecordDecoderBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-        String recordString = input.getValue(0).toString().trim();
 
-        String[] recordStringSplit = recordString.split("[\\s]", 7);
+        String recordString = new String(input.getBinary(0));
+        LOG.info(recordString);
+
+        String[] recordStringSplit = recordString.split("[\\s]", 8);
 
         try{
             long index = Long.parseLong(recordStringSplit[0]);
             double timestamp = Double.parseDouble(recordStringSplit[1]);
             String source_ip = recordStringSplit[2];
-            String destination_ip = recordStringSplit[3];
-            String protocol = recordStringSplit[4];
-            int length = Integer.parseInt(recordStringSplit[5]);
-            String details = recordStringSplit[6];
+            String destination_ip = recordStringSplit[4];
+            String protocol = recordStringSplit[5];
+            int length = Integer.parseInt(recordStringSplit[6]);
+            String details = recordStringSplit[7];
 
             Packet pkt = new Packet(index, timestamp, source_ip, destination_ip, protocol, length, details);
             collector.emit(new Values(pkt));
             collector.ack(input);
         } catch (Exception ex) {
+            LOG.error("Error parsing record: " + recordString);
             LOG.error(ex);
-            System.out.println(ex.getMessage());
         }
     }
 

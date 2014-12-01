@@ -14,7 +14,7 @@ public class AttackDetectionTopology {
     private static final Logger LOG = Logger.getLogger(AttackDetectionTopology.class);
 
     private static final String ZOOKEEPER_HOSTS = "zookeeper1.kevinmao.com:2181";
-    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddosdata.tovictim.text";
+    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text";
     private static final int SPOUT_PARALLELISM = 2;
 
     private static final int DECODER_BOLT_PARALLELISM = 4;
@@ -61,22 +61,22 @@ public class AttackDetectionTopology {
     private StormTopology buildTopology() {
         TopologyBuilder builder = new TopologyBuilder();
 
-        String SPOUT_ID = "attk-KAFKA_SPOUT";
-        String DECODER_BOLT_ID = "attk-PACKET_DECODER_BOLT";
-        String COUNTER_BOLT_ID = "attk-PACKET_COUNTER_BOLT";
-        String COUNTER_BOLT_GRAPHITE_ID = "attk-PACKET_COUNTER_GRAPHITE_BOLT";
-        String GRAY_MODEL_BOLT_ID = "attk-GRAY_MODEL_BOLT";
-        String GRAY_MODEL_BOLT_GRAPHITE_ID = "attk-GRAY_MODEL_GRAPHITE_BOLT";
-        String CUSUM_BOLT_ID = "attk-CUSUM_BOLT";
-        String CUSUM_BOLT_GRAPHITE_ID = "attk-CUSUM_GRAPHITE_BOLT";
-        String ATTACK_DETECTOR_BOLT_ID = "attk-ATTACK_DETECT_BOLT";
-        String ATTACK_DETECTOR_BOLT_GRAPHITE_ID = "attk-ATTACK_DETECT_GRAPHITE_BOLT";
-        String GRAPHITE_WRITER_BOLT_ID = "attk-GRAPHITE_WRITER_BOLT";
+        String SPOUT_ID = "Kafka Spout";
+        String DECODER_BOLT_ID = "Packet Decoder Bolt";
+        String COUNTER_BOLT_ID = "Packet Counter Bolt";
+        String COUNTER_BOLT_GRAPHITE_ID = "Packet Counter Graphite Reporting Bolt";
+        String GREY_MODEL_BOLT_ID = "Grey Model Forecasting Bolt";
+        String GREY_MODEL_BOLT_GRAPHITE_ID = "Grey Model Graphite Reporting Bolt";
+        String CUSUM_BOLT_ID = "Cumulative Sum Aggregation Bolt";
+        String CUSUM_BOLT_GRAPHITE_ID = "Cumulative Sum Graphite Reporting Bolt";
+        String ATTACK_DETECTOR_BOLT_ID = "DDoS Attack Detection Bolt";
+        String ATTACK_DETECTOR_BOLT_GRAPHITE_ID = "DDoS Attack Graphite Reporting Bolt";
 
         //Kafka Spout Configuration
-        SpoutConfig spout_conf = new SpoutConfig(new ZkHosts(ZOOKEEPER_HOSTS),
+        SpoutConfig spout_conf = new SpoutConfig(
+                new ZkHosts(ZOOKEEPER_HOSTS),
                 SPOUT_INPUT_KAFKA_TOPIC,
-                "attk-kafka_spout",
+                "/attk-kafka_spout",
                 "attackDetectionTopology-id");
         builder.setSpout(SPOUT_ID, new KafkaSpout(spout_conf), SPOUT_PARALLELISM);
 
@@ -94,15 +94,15 @@ public class AttackDetectionTopology {
 
         //Grey Model Forecasting Bolt Configuration
         GrayModelForecastingBolt greyModelBolt = new GrayModelForecastingBolt();
-        builder.setBolt(GRAY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
+        builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         GrayModelForecastingGraphiteWriterBolt grayModelGraphiteBolt =
                 new GrayModelForecastingGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);
-        builder.setBolt(GRAY_MODEL_BOLT_GRAPHITE_ID, grayModelGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(GRAY_MODEL_BOLT_ID);
+        builder.setBolt(GREY_MODEL_BOLT_GRAPHITE_ID, grayModelGraphiteBolt, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
 
         //Cumulative Sum Aggregation Bolt Configuration
         CumulativeSumAggregationBolt cuSumBolt = new CumulativeSumAggregationBolt();
-        builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GRAY_MODEL_BOLT_ID);
+        builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
 
         CumulativeSumAggregationGraphiteWriterBolt cuSumGraphiteBolt =
                 new CumulativeSumAggregationGraphiteWriterBolt(GRAPHITE_SERVER_HOSTNAME, GRAPHITE_SERVER_PORT);

@@ -1,7 +1,9 @@
 package com.kevinmao.util;
 
 
-public class Packet {
+import java.io.Serializable;
+
+public class Packet implements Serializable {
     private final long index;
     private final double timestamp;
     private final String source_ip;
