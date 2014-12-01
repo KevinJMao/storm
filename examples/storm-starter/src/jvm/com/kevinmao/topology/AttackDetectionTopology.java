@@ -33,6 +33,7 @@ public class AttackDetectionTopology {
     public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";
 
     private static final int ATTACK_DETECTOR_BOLT_PARALLELISM = 1;
+    private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 5.0;
     public static final String ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD = "attackDetected";
 
     private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
@@ -42,11 +43,11 @@ public class AttackDetectionTopology {
     public AttackDetectionTopology() {
     }
 
-    public void run(Config topologyConfig) {
+    public void run() {
         StormTopology topology = buildTopology();
 
         try {
-            StormSubmitter.submitTopology(TOPOLOGY_NAME, topologyConfig, topology);
+            StormSubmitter.submitTopology(TOPOLOGY_NAME, createTopologyConfig(), topology);
         } catch (Exception ex) {
             System.err.println(ex.getMessage());
             System.err.println(ex.getStackTrace());
@@ -89,7 +90,7 @@ public class AttackDetectionTopology {
         builder.setBolt(CUSUM_BOLT_ID, cuSumBolt, CUSUM_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(GREY_MODEL_BOLT_ID);
 
         //Attack Detector Bolt Configuration
-        AttackDetectorBolt detectorBolt = new AttackDetectorBolt();
+        AttackDetectorBolt detectorBolt = new AttackDetectorBolt(ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE);
         builder.setBolt(ATTACK_DETECTOR_BOLT_ID, detectorBolt, ATTACK_DETECTOR_BOLT_PARALLELISM).localOrShuffleGrouping(CUSUM_BOLT_ID);
 
         //Graphite Writer Bolt Configuration
@@ -101,11 +102,18 @@ public class AttackDetectionTopology {
 
     private Config createTopologyConfig() {
         Config config = new Config();
+        config.setDebug(false);
+        config.setNumWorkers(4);
+        config.setMaxSpoutPending(1000);
+        config.setMessageTimeoutSecs(60);
+        config.setNumAckers(0);
+        config.setMaxTaskParallelism(50);
 
         return config;
     }
 
     public static void main(String[] args) {
-
+        AttackDetectionTopology topology = new AttackDetectionTopology();
+        topology.run();
     }
 }

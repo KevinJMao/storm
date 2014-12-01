@@ -6,6 +6,7 @@ import backtype.storm.topology.OutputFieldsDeclarer;
 import backtype.storm.topology.base.BaseRichBolt;
 import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
+import backtype.storm.tuple.Values;
 import com.kevinmao.topology.AttackDetectionTopology;
 import org.apache.log4j.Logger;
 import storm.starter.util.TupleHelpers;
@@ -17,40 +18,30 @@ public class AttackDetectorBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(TextPcapDecoderBolt.class);
     private OutputCollector collector;
 
-    private static final int DEFAULT_EMIT_FREQUENCY_IN_SECONDS = 60;
+    private double detectionThreshold;
 
-    private final int emitFrequencyInSeconds;
-
-    public AttackDetectorBolt(){
-        this(DEFAULT_EMIT_FREQUENCY_IN_SECONDS);
-    }
-
-    public AttackDetectorBolt(int emitFrequencyInSeconds) {
-        this.emitFrequencyInSeconds = emitFrequencyInSeconds;
+    public AttackDetectorBolt(double detectionThreshold) {
+        this.detectionThreshold = detectionThreshold;
     }
 
     @SuppressWarnings("rawtypes")
     @Override
     public void prepare(Map stormConf, TopologyContext context, OutputCollector collector) {
-
+        this.collector = collector;
     }
 
     @Override
     public void execute(Tuple tuple) {
+        collector.ack(tuple);
+        if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString()) > detectionThreshold) {
+            collector.emit(new Values(true));
+        } else {
+            collector.emit(new Values(false));
+        }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD));
-    }
-
-    @Override
-    public Map<String, Object> getComponentConfiguration() {
-        return new HashMap<String, Object>();
-    }
-
-    @Override
-    public void cleanup(){
-
     }
 }
