@@ -20,12 +20,14 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
     private int timeIndex;
     private long packetCount;
     private double nextEmit;
+    private long lastRecordTimestampSeconds;
 
     public PacketRecordCounterBolt(double countingTimeWindow) {
         this.countingTimeWindow = countingTimeWindow;
         this.timeIndex = 1;
         packetCount = 0;
         nextEmit = countingTimeWindow;
+        lastRecordTimestampSeconds = AttackDetectionTopology.TOPOLOGY_START_TIME_MILLIS;
     }
 
     @Override
@@ -48,19 +50,22 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
         Packet record = (Packet) input.getValueByField(AttackDetectionTopology.DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD);
         collector.ack(input);
         if(record.getTimestamp() >= nextEmit) {
-            collector.emit(new Values(timeIndex, packetCount));
+            collector.emit(new Values(timeIndex, packetCount, lastRecordTimestampSeconds));
             timeIndex++;
             nextEmit += countingTimeWindow;
             packetCount = 0;
         } else {
             packetCount++;
+            Long timestampOffsetMillis = (long) (record.getTimestamp() * 1000.0);
+            lastRecordTimestampSeconds = (AttackDetectionTopology.TOPOLOGY_START_TIME_MILLIS + timestampOffsetMillis) / 1000L;
         }
     }
 
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD,
-                AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD));
+                AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD,
+                AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }
 
@@ -71,8 +76,8 @@ class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
     @Override
     public void execute(Tuple input) {
         Long actualPacketCount = Long.parseLong(input.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
-        Long currentTimeSecs = System.currentTimeMillis() / 1000;
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", actualPacketCount.toString() , currentTimeSecs);
+        Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", actualPacketCount.toString() , timestamp);
         super.collector.ack(input);
     }
 }

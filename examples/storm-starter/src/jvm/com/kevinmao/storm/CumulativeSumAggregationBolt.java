@@ -44,7 +44,7 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         LOG.debug("Apply CUSUM algorithm to detect SYN flooding attack");
 
-        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
+        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
         origSeriesOfSYN.add(actualPacketCount);
 
         double grayForecastedCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());

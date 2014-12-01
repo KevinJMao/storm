@@ -148,7 +148,7 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD,
-                AttackDetectionTopology.GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD));
+                AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD));
     }
 }
 

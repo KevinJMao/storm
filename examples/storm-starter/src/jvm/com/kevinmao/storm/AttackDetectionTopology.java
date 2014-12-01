@@ -27,7 +27,7 @@ public class AttackDetectionTopology {
 
     private static final int GREY_MODEL_BOLT_PARALLELISM = 1;
     public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
-    public static final String GRAY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
+    public static final String GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
 
     private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;
     public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";
@@ -39,6 +39,9 @@ public class AttackDetectionTopology {
     private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
     private static final String GRAPHITE_SERVER_HOSTNAME = "monitor1.kevinmao.com";
     private static final int GRAPHITE_SERVER_PORT = 2003;
+
+    public static final String LAST_TIMESTAMP_MEASURED = "lastTimestampSeconds";
+    public static final Long TOPOLOGY_START_TIME_MILLIS = System.currentTimeMillis();
 
     public AttackDetectionTopology() {
     }
