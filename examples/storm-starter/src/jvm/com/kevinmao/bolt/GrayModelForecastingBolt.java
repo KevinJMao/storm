@@ -17,10 +17,10 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GrayModelForecastingBolt.class);
     private OutputCollector collector;
 
-    private static final ArrayList<Long> DEFAULT_EMPTY_DOUBLE_ARRAY = new ArrayList<Long>();
+    private static final ArrayList<Long> DEFAULT_EMPTY_LONG_ARRAY = new ArrayList<Long>();
     private ArrayList<Long> origSeriesOfSYN;
 
-    public GrayModelForecastingBolt(){ this(DEFAULT_EMPTY_DOUBLE_ARRAY); }
+    public GrayModelForecastingBolt(){ this(DEFAULT_EMPTY_LONG_ARRAY); }
 
     public GrayModelForecastingBolt(ArrayList<Long> origSeriesOfSYN) {
         this.origSeriesOfSYN = origSeriesOfSYN;
