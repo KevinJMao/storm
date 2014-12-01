@@ -38,10 +38,7 @@ public class KafkaPacketRecordDecoderBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple input) {
-
         String recordString = new String(input.getBinary(0));
-        LOG.info(recordString);
-
         String[] recordStringSplit = recordString.split("[\\s]", 8);
 
         try{

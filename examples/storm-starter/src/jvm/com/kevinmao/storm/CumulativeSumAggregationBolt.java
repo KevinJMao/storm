@@ -102,7 +102,7 @@ class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase 
     }
     @Override
     public void execute(Tuple input) {
-        Long cuSumValues = Long.parseLong(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
+        Double cuSumValues = Double.parseDouble(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(cuSumValues), timestamp);
         super.collector.ack(input);
