@@ -164,7 +164,7 @@ class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     }
     @Override
     public void execute(Tuple input) {
-        Long greyForecastedValue = Long.parseLong(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
+        Double greyForecastedValue = Double.parseDouble(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);

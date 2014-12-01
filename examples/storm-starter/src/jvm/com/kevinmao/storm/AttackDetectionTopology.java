@@ -14,7 +14,7 @@ public class AttackDetectionTopology {
     private static final Logger LOG = Logger.getLogger(AttackDetectionTopology.class);
 
     private static final String ZOOKEEPER_HOSTS = "zookeeper1.kevinmao.com:2181";
-    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text";
+    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text2";
     private static final int SPOUT_PARALLELISM = 2;
 
     private static final int DECODER_BOLT_PARALLELISM = 4;
