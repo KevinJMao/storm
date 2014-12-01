@@ -36,7 +36,11 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
 
         origSeriesOfSYN.add(actualPacketCount);
-        collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount, timestamp));
+
+        if (origSeriesOfSYN.size() < 2)
+            collector.emit(new Values(actualPacketCount, actualPacketCount, timestamp));
+        else
+            collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount, timestamp));
         collector.ack(tuple);
     }
 
