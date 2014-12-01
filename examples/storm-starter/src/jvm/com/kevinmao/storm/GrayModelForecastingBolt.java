@@ -16,13 +16,10 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GrayModelForecastingBolt.class);
     private OutputCollector collector;
 
-    private static final ArrayList<Long> DEFAULT_EMPTY_LONG_ARRAY = new ArrayList<Long>();
     private ArrayList<Long> origSeriesOfSYN;
 
-    public GrayModelForecastingBolt(){ this(DEFAULT_EMPTY_LONG_ARRAY); }
-
-    public GrayModelForecastingBolt(ArrayList<Long> origSeriesOfSYN) {
-        this.origSeriesOfSYN = origSeriesOfSYN;
+    public GrayModelForecastingBolt() {
+        this.origSeriesOfSYN = new ArrayList<Long>();
     }
 
     @SuppressWarnings("rawtypes")
@@ -33,7 +30,7 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1)");
+        LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1) to predict SYN traffic");
         int timeIndex = Integer.parseInt(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD).toString());
         long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         origSeriesOfSYN.add(actualPacketCount);
@@ -46,7 +43,7 @@ public class GrayModelForecastingBolt extends BaseRichBolt {
         int arraySize = origSeriesOfSYN.size()-1;
 
         /*
-         * Step 2: generating 1-AGO
+         * Step 2: generate 1-AGO
          */
         ArrayList<Double> oneAgo = new ArrayList<Double>(arraySize+1);
         double sum = 0;
