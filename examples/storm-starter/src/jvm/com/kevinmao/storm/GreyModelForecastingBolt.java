@@ -38,10 +38,15 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
         origSeriesOfSYN.add(actualPacketCount);
 
-        if (origSeriesOfSYN.size() < 2)
+        if (origSeriesOfSYN.size() <= 2) {
             collector.emit(new Values(actualPacketCount, actualPacketCount, timestamp));
-        else
-            collector.emit(new Values(calcGM(origSeriesOfSYN, timeIndex), actualPacketCount, timestamp));
+            LOG.info("Emit acutualPacketCount: " + actualPacketCount + ", timestamp: " + timestamp);
+        }
+        else {
+            double gmVal = calcGM(origSeriesOfSYN, timeIndex);
+            collector.emit(new Values(gmVal, actualPacketCount, timestamp));
+            LOG.info("Emit GM value: " + gmVal+ "acutualPacketCount: " + actualPacketCount + ", timestamp: " + timestamp);
+        }
         collector.ack(tuple);
     }
 

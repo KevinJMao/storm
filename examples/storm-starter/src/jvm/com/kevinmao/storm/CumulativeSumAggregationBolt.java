@@ -44,8 +44,11 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         grayModelForecastedOutput.add(grayForecastedCount);
 
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        double cusumVal = calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput);
 
-        collector.emit(new Values(calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput), timestamp));
+        collector.emit(new Values(cusumVal, timestamp));
+        LOG.info("Emit CUSUM value: " + cusumVal + ", timestamp: " + timestamp);
+
         collector.ack(tuple);
     }
 
