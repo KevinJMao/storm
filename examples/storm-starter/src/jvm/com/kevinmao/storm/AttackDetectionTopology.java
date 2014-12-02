@@ -38,7 +38,7 @@ public class AttackDetectionTopology {
 
     private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
     private static final String GRAPHITE_SERVER_HOSTNAME = "monitor1.kevinmao.com";
-    private static final int GRAPHITE_SERVER_PORT = 2003;
+    private static final int GRAPHITE_SERVER_PORT = 1999;
 
     public static final String LAST_TIMESTAMP_MEASURED = "lastTimestampSeconds";
     public static final Long TOPOLOGY_START_TIME_MILLIS = System.currentTimeMillis();
