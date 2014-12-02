@@ -8,8 +8,13 @@ import backtype.storm.tuple.Fields;
 import backtype.storm.tuple.Tuple;
 import backtype.storm.tuple.Values;
 import com.kevinmao.graphite.GraphiteCodec;
+import org.apache.commons.math3.linear.LUDecomposition;
+import org.apache.commons.math3.linear.MatrixUtils;
+import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.log4j.Logger;
+import org.apache.commons.lang.ArrayUtils.*;
 
+import java.lang.Math;
 import java.util.Map;
 import java.util.ArrayList;
 
@@ -17,10 +22,19 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GreyModelForecastingBolt.class);
     private OutputCollector collector;
 
-    private ArrayList<Long> origSeriesOfSYN;
+    private static final double BACKGROUND_VALUE_P = 0.5;
+    private ArrayList<Double> actualInputValues_x0;
+    private ArrayList<Double> accumulatedSum_x1;
+    private ArrayList<Double> forecastedAccumulatedSum_z1;
+    private Integer timeIndex;
+
+    //z^(1)(k) = (p * x(1)(k)) + (1 - p) * x(1)(k + 1)
 
     public GreyModelForecastingBolt() {
-        this.origSeriesOfSYN = new ArrayList<Long>();
+        this.actualInputValues_x0 = new ArrayList<Double>();
+        this.accumulatedSum_x1 = new ArrayList<Double>();
+        this.forecastedAccumulatedSum_z1 = new ArrayList<Double>();
+        timeIndex = 0;
     }
 
     @SuppressWarnings("rawtypes")
@@ -31,129 +45,88 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
     @Override
     public void execute(Tuple tuple) {
-        LOG.debug("Received original series of TCP SYN data, apply grey model GM(1,1) to predict SYN traffic");
-        int timeIndex = Integer.parseInt(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_TIME_INDEX_FIELD).toString());
+        timeIndex++;
         long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
 
-        origSeriesOfSYN.add(actualPacketCount);
+        actualInputValues_x0.add(Double.parseDouble(Long.toString(actualPacketCount)));
+        accumulatedSum_x1.add(accumulatedSum_x1.get(accumulatedSum_x1.size() - 1) + actualPacketCount);
 
-        if (origSeriesOfSYN.size() <= 2) {
-            collector.emit(new Values(actualPacketCount, actualPacketCount, timestamp));
-            LOG.info("Emitting values: (gmVal : " + actualPacketCount + "),(actualPacketCount : " + actualPacketCount + "),(timestamp : " + timestamp);
+        //Have to bootstrap eqn7 by 1, calculate starting on the second value that comes in
+        //The size of this list will subsequently be one smaller than the size of the actualInputValues list
+        if(timeIndex > 1) {
+            int k = timeIndex - 2;
+
+            double accumulatedSumDecayingAverage = (BACKGROUND_VALUE_P * accumulatedSum_x1.get(k)) +
+                    ((1 - BACKGROUND_VALUE_P) * accumulatedSum_x1.get(k));
+            forecastedAccumulatedSum_z1.set(k, accumulatedSumDecayingAverage);
+
+            double emitForecast = decayingAverageCalculation_Eq7();
+            long emitActualOutputVolume = actualPacketCount;
+            long lastTimestampMeasured = timestamp;
+
+            collector.emit(new Values(emitForecast, emitActualOutputVolume, lastTimestampMeasured));
+            collector.ack(tuple);
         }
-        else {
-            double gmVal = calcGM(origSeriesOfSYN, timeIndex);
-            collector.emit(new Values(gmVal, actualPacketCount, timestamp));
-            LOG.info("Emitting values: (gmVal : " + gmVal + "),(actualPacketCount : " + actualPacketCount + "),(timestamp : " + timestamp);
-        }
-        collector.ack(tuple);
     }
 
-    private double calcGM(ArrayList<Long> origSeriesOfSYN, int k) {
-        double result = 0;
-        int arraySize = origSeriesOfSYN.size()-1;
+    private RealMatrix generateMatrix_B(){
+        double[][] matrixData = new double[forecastedAccumulatedSum_z1.size()][2];
+        int counter = 0;
+        for(Double z : forecastedAccumulatedSum_z1) {
+            matrixData[counter][0] = z;
+            matrixData[counter][1] = 1.0;
+            counter++;
+        }
+        return MatrixUtils.createRealMatrix(matrixData);
+    }
 
-        /*
-         * Step 2: generate 1-AGO
-         */
-        double[] oneAgo = new double[arraySize+1];
-        double sum = 0;
-        for(int i = 0; i <= arraySize; i++) {
-            sum += origSeriesOfSYN.get(i);
-            oneAgo[i] = sum;
+    private RealMatrix generateMatrix_Yn(){
+        double[] matrixData = new double[forecastedAccumulatedSum_z1.size()];
+        int counter = 0;
+
+        //We're pretty much hoping that the size of the actual input value is one entry larger than the forecasted accumulation z
+        for(Double x : actualInputValues_x0) {
+            matrixData[counter] = actualInputValues_x0.get(counter + 1);
         }
 
-        /*
-         * Step 3: mean generation of consecutive neighbors
-         */
-        double[] meanGeneration = new double[arraySize];
-        for(int i = 0; i < arraySize; i++) {
-            meanGeneration[i] = (oneAgo[i]+oneAgo[i+1])/2;
-        }
+        //Unsure of whether to use createColumnRealMatrix or columnRowMatrix
+        return MatrixUtils.createColumnRealMatrix(matrixData);
+    }
 
-        /*
-         * Step 4: solve the model parameters a and b
-         */
-        // Generate matrix B
-        double[][] B = new double[arraySize][2];
-        for(int i = 0; i < arraySize; i++) {
-            for(int j = 0; j < 2; j++) {
-                if(j == 1)
-                    B[i][j] = 1;
-                else
-                    B[i][j] = -meanGeneration[i];
-            }
-        }
 
-        // Generate matrix YN
-        double[][] YN = new double[arraySize][1];
-        for(int i = 0; i < arraySize; i++) {
-            for (int j = 0; j < 1; j++) {
-                YN[i][j] = origSeriesOfSYN.get(i + 1);
-            }
-        }
+    private double decayingAverageCalculation_Eq7() {
+        RealMatrix B = generateMatrix_B();
+        RealMatrix Yn = generateMatrix_Yn();
 
-        // Generate BT, which is the transpose of matrix B
-        double[][] BT = new double[2][arraySize];
-        for(int i = 0; i < 2; i++) {
-            for (int j = 0; j < arraySize; j++) {
-                BT[i][j] = B[j][i];
-            }
-        }
+        RealMatrix B_transpose = B.transpose();
 
-        // Calculate multiplication of B and BT
-        double[][] BBT = new double[2][2];
-        // Rows of BT
-        for(int i = 0; i < 2; i++) {
-            // Columns of B
-            for(int j = 0; j < 2; j++) {
-                // Columns of BT and Rows of B
-                for(int x = 0; x < arraySize; x++){
-                    BBT[i][j] += (BT[i][x]*B[x][j]);
-                }
-            }
-        }
+        RealMatrix B__mult__B_transpose = B.multiply(B_transpose);
+        RealMatrix inverseOf__B__mult__B_transpose = new LUDecomposition(B__mult__B_transpose).getSolver().getInverse();
 
-        // Generate the inverse matrix of BBT
-        double[][] inverseBBT = new double[2][2];
-        inverseBBT[0][0]=(1/(BBT[0][0]*BBT[1][1]-BBT[0][1]*BBT[1][0]))*BBT[1][1];
-        inverseBBT[0][1]=(1/(BBT[0][0]*BBT[1][1]-BBT[0][1]*BBT[1][0]))*(-BBT[0][1]);
-        inverseBBT[1][0]=(1/(BBT[0][0]*BBT[1][1]-BBT[0][1]*BBT[1][0]))*(-BBT[1][0]);
-        inverseBBT[1][1]=(1/(BBT[0][0]*BBT[1][1]-BBT[0][1]*BBT[1][0]))*BBT[0][0];
+        //Assuming we are okay to multiply the last two components here because matrix multiplication is associative
+        RealMatrix B_transpose__mult__Yn = B_transpose.multiply(Yn);
 
-        // Calculate multiplication of inverseBBT and BT as matrix A
-        double[][] A = new double[2][arraySize];
-        for(int i = 0; i < 2; i++) {
-            for (int j = 0; j < arraySize; j++) {
-                for(int x = 0; x < 2; x++){
-                    A[i][j] += (inverseBBT[i][x]*BT[x][j]);
-                }
-            }
-        }
+        RealMatrix a_b_coefficients = inverseOf__B__mult__B_transpose.multiply(B_transpose__mult__Yn);
 
-        // Calculate multiplication of A and YN as matrix C
-        double[][] C = new double[2][1];
-        for(int i = 0; i < 2; i++) {
-            for (int j = 0; j < 1; j++) {
-                for(int x = 0; x < arraySize; x++){
-                    C[i][j] += (A[i][x]*YN[x][j]);
-                }
-            }
-        }
+        LOG.info("Final coefficient result is: " + a_b_coefficients.toString());
 
-        // Get the model parameters a and b
-        double a = C[0][0];
-        double b = C[1][0];
+        Double a_coeff = a_b_coefficients.getEntry(0, 0);
+        Double b_coeff = a_b_coefficients.getEntry(1, 0);
 
-        /*
-         * Step 5: calculate the desired prediction output
-         */
-        if (!(Double.isNaN(a) && Double.isNaN(b)))
-            result = ((origSeriesOfSYN.get(0) - b/a) * Math.exp(-a*k)) + (b / a);
+        return greyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.get(0), timeIndex);
+    }
 
-        LOG.info("GREY MODEL CALCULATION COEFFICIENTS: (result : " + result + "),(a : " + a + "),(b : " + b + ")");
-        return result;
+    private Double greyForecastingEquation(Double a, Double b, Double rawValue, Integer timeIndex) {
+        assert(!a.isNaN() && !a.isInfinite() && a != null);
+        assert(!b.isNaN() && !b.isInfinite() && b != null);
+        assert(!rawValue.isNaN() && !rawValue.isInfinite() && rawValue != null);
+
+        Double term1 = 1.0 - java.lang.Math.exp(a * -1.0);
+        Double term2 = (rawValue - (b / a));
+        Double term3 = java.lang.Math.exp(-1.0 * a * timeIndex);
+
+        return (term1 * term2 * term3);
     }
 
     @Override
