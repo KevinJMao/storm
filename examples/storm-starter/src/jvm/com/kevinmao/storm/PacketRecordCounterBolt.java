@@ -51,7 +51,7 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
         Packet record = (Packet) input.getValueByField(AttackDetectionTopology.DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD);
         collector.ack(input);
         if(record.getTimestamp() >= nextEmit) {
-            LOG.info("Emitting value:" + new Values(timeIndex, packetCount, lastRecordTimestampSeconds));
+            LOG.info("Emitting values: (timeIndex : " + timeIndex + "),(packetCount : " + packetCount + "),(lastRecordTimestampSeconds : " + lastRecordTimestampSeconds + ")");
             collector.emit(new Values(timeIndex, packetCount, lastRecordTimestampSeconds));
             timeIndex++;
             nextEmit += countingTimeWindow;
