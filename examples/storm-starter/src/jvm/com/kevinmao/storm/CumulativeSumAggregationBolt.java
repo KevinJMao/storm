@@ -47,7 +47,7 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         double cusumVal = calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput);
 
         collector.emit(new Values(cusumVal, timestamp));
-        LOG.info("Emit CUSUM value: " + cusumVal + ", timestamp: " + timestamp);
+        LOG.info("Emitting values: (cusumVal : " + cusumVal + "),(timestamp : " + timestamp + ")");
 
         collector.ack(tuple);
     }
