@@ -81,7 +81,7 @@ class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Long actualPacketCount = Long.parseLong(input.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        LOG.info("Sending to graphite: (actualPacketCount, " + actualPacketCount + ", " + timestamp + ")");
+//        LOG.info("Sending to graphite: (actualPacketCount, " + actualPacketCount + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", GraphiteCodec.format(actualPacketCount) , timestamp);
         super.collector.ack(input);
     }

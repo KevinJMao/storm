@@ -150,8 +150,9 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
          * Step 5: calculate the desired prediction output
          */
         if (!(Double.isNaN(a) && Double.isNaN(b)))
-            result = (1 - Math.exp(-a)) * ((origSeriesOfSYN.get(0) - b/a) * Math.exp(-a*k));
+            result = ((origSeriesOfSYN.get(0) - b/a) * Math.exp(-a*k)) + (b / a);
 
+        LOG.info("GREY MODEL CALCULATION COEFFICIENTS: (result : " + result + "),(a : " + a + "),(b : " + b + ")");
         return result;
     }
 
@@ -172,7 +173,7 @@ class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Double greyForecastedValue = Double.parseDouble(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        LOG.info("Sending to graphite: (greyForecastedVolume, " + greyForecastedValue + ", " + timestamp + ")");
+//        LOG.info("Sending to graphite: (greyForecastedVolume, " + greyForecastedValue + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);
     }
