@@ -51,7 +51,7 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
         Packet record = (Packet) input.getValueByField(AttackDetectionTopology.DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD);
         collector.ack(input);
         if(record.getTimestamp() >= nextEmit) {
-            LOG.info("Emitting values: (timeIndex : " + timeIndex + "),(packetCount : " + packetCount + "),(lastRecordTimestampSeconds : " + lastRecordTimestampSeconds + ")");
+//            LOG.info("Emitting values: (timeIndex : " + timeIndex + "),(packetCount : " + packetCount + "),(lastRecordTimestampSeconds : " + lastRecordTimestampSeconds + ")");
             collector.emit(new Values(timeIndex, packetCount, lastRecordTimestampSeconds));
             timeIndex++;
             nextEmit += countingTimeWindow;
@@ -81,7 +81,7 @@ class PacketRecordCounterGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Long actualPacketCount = Long.parseLong(input.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-//        LOG.info("Sending to graphite: (actualPacketCount, " + actualPacketCount + ", " + timestamp + ")");
+        LOG.info("Sending to graphite: (actualPacketCount, " + actualPacketCount + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".actualPacketCount", GraphiteCodec.format(actualPacketCount) , timestamp);
         super.collector.ack(input);
     }

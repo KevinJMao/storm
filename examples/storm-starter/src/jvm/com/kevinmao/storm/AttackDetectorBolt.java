@@ -60,7 +60,7 @@ class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
         Long attackValue = attackDetector ? -100L : 100L;
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
 //        LOG.info("Sending to graphite: (attackDetector, " + attackValue + ", " + timestamp + ")");
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(attackValue), timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".attackDetectionValue", GraphiteCodec.format(attackValue), timestamp);
         super.collector.ack(input);
     }
 }

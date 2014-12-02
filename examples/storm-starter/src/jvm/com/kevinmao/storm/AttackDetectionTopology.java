@@ -17,11 +17,11 @@ public class AttackDetectionTopology {
     private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text2";
     private static final int SPOUT_PARALLELISM = 2;
 
-    private static final int DECODER_BOLT_PARALLELISM = 4;
+    private static final int DECODER_BOLT_PARALLELISM = 20;
     public static final String DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD = "packetRecord";
 
     private static final int COUNTER_BOLT_PARALLELISM = 1;
-    private static final double COUNTER_BOLT_COUNTING_TIME_WINDOW = 10.0;
+    private static final double COUNTER_BOLT_COUNTING_TIME_WINDOW = 1.0;
     public static final String COUNTER_BOLT_TIME_INDEX_FIELD = "timeIndex";
     public static final String COUNTER_BOLT_PACKET_COUNT_FIELD = "packetCount";
 
@@ -33,15 +33,15 @@ public class AttackDetectionTopology {
     public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";
 
     private static final int ATTACK_DETECTOR_BOLT_PARALLELISM = 1;
-    private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 5.0;
+    private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 100.0;
     public static final String ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD = "attackDetected";
 
     private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
     private static final String GRAPHITE_SERVER_HOSTNAME = "monitor1.kevinmao.com";
-    private static final int GRAPHITE_SERVER_PORT = 1999;
+    private static final int GRAPHITE_SERVER_PORT = 2003;
 
     public static final String LAST_TIMESTAMP_MEASURED = "lastTimestampSeconds";
-    public static final Long TOPOLOGY_START_TIME_MILLIS = System.currentTimeMillis();
+    public static final Long TOPOLOGY_START_TIME_MILLIS = System.currentTimeMillis() - 1800000;
 
     public AttackDetectionTopology() {
     }

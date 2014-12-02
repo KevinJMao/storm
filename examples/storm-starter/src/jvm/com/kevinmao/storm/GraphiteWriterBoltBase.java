@@ -56,8 +56,10 @@ public abstract class GraphiteWriterBoltBase extends BaseRichBolt {
     protected void sendToGraphite(String metricPath, String value, long timestamp) {
 //        LOG.info("Attempting to send to Graphite: (" + metricPath + "," + value + "," + timestamp + ")");
         try {
+            graphiteConnect();
             if (graphiteAdapter != null) {
                 graphiteAdapter.send(metricPath, value, timestamp);
+                graphiteDisconnect();
             }
         }
         catch (IOException e) {
