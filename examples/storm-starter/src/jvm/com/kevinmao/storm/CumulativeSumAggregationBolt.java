@@ -100,6 +100,8 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
 }
 
 class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    private static final Logger LOG = Logger.getLogger(CumulativeSumAggregationGraphiteWriterBolt.class);
+
     public CumulativeSumAggregationGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
         super(graphiteServerHostname, graphiteServerPortNumber);
     }
@@ -107,6 +109,7 @@ class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase 
     public void execute(Tuple input) {
         Double cuSumValues = Double.parseDouble(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        LOG.info("Sending to graphite: (cumulativeSumValues, " + cuSumValues + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(cuSumValues), timestamp);
         super.collector.ack(input);
     }

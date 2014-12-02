@@ -164,6 +164,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 }
 
 class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    private static final Logger LOG = Logger.getLogger(GreyModelForecastingGraphiteWriterBolt.class);
     public GreyModelForecastingGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
         super(graphiteServerHostname, graphiteServerPortNumber);
     }
@@ -171,6 +172,7 @@ class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Double greyForecastedValue = Double.parseDouble(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        LOG.info("Sending to graphite: (greyForecastedVolume, " + greyForecastedValue + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);
     }

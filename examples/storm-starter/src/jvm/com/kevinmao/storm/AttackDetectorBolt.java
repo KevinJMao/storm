@@ -49,6 +49,8 @@ public class AttackDetectorBolt extends BaseRichBolt {
 }
 
 class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
+    private static final Logger LOG = Logger.getLogger(AttackDetectorGraphiteWriterBolt.class);
+
     public AttackDetectorGraphiteWriterBolt(String graphiteServerHostname, int graphiteServerPortNumber) {
         super(graphiteServerHostname, graphiteServerPortNumber);
     }
@@ -57,6 +59,7 @@ class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
         boolean attackDetector = Boolean.parseBoolean(input.getValueByField(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD).toString());
         Long attackValue = attackDetector ? -100L : 100L;
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        LOG.info("Sending to graphite: (attackDetector, " + attackValue + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(attackValue), timestamp);
         super.collector.ack(input);
     }
