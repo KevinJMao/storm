@@ -10,21 +10,20 @@ import backtype.storm.tuple.Values;
 import com.kevinmao.graphite.GraphiteCodec;
 import org.apache.log4j.Logger;
 
-import java.util.ArrayList;
 import java.util.Map;
 
 public class CumulativeSumAggregationBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(CumulativeSumAggregationBolt.class);
     private OutputCollector collector;
 
-    private final double ALPHA = 0.5;
+    private static final Double ALPHA = 0.6;
+    private static final Double LAMBDA = 0.5;
 
-    private ArrayList<Long> origSeriesOfSYN;
-    private ArrayList<Double> grayModelForecastedOutput;
+    private CumulativeSum actualPacketCount_CUSUM;
+    private CumulativeSum greyForecasted_CUSUM;
+
 
     public CumulativeSumAggregationBolt(){
-        this.origSeriesOfSYN = new ArrayList<Long>();
-        this.grayModelForecastedOutput = new ArrayList<Double>();
     }
 
     @SuppressWarnings("rawtypes")
@@ -37,64 +36,40 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         LOG.debug("Apply CUSUM algorithm to detect SYN flooding attack");
 
-        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
-        origSeriesOfSYN.add(actualPacketCount);
+        Long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
 
-        double grayForecastedCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
-        grayModelForecastedOutput.add(grayForecastedCount);
+        Double greyForecastedCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
 
-        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-        double cusumVal = calcCUSUM(origSeriesOfSYN, grayModelForecastedOutput);
+        Long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
 
-        collector.emit(new Values(cusumVal, timestamp));
-        LOG.info("Emitting values: (cusumVal : " + cusumVal + "),(timestamp : " + timestamp + ")");
+        if(actualPacketCount_CUSUM == null) {
+            actualPacketCount_CUSUM = new CumulativeSum(actualPacketCount.doubleValue(), ALPHA, LAMBDA);
+        } else {
+            actualPacketCount_CUSUM.update(actualPacketCount.doubleValue());
+        }
+
+        if(greyForecastedCount == null) {
+            greyForecasted_CUSUM = new CumulativeSum(greyForecastedCount, ALPHA, LAMBDA);
+        } else {
+            greyForecasted_CUSUM.update(greyForecastedCount);
+        }
+
+
+
+        collector.emit(new Values(actualPacketCount_CUSUM.getCumulativeSum(),
+                greyForecasted_CUSUM.getCumulativeSum(),
+                timestamp));
+        LOG.info("Emitting values: (actual count CUSUM : " + actualPacketCount_CUSUM.getCumulativeSum() +
+                "),(grey count CUSUM : " + greyForecasted_CUSUM.getCumulativeSum() +
+                "),(timestamp : " + timestamp + ")");
 
         collector.ack(tuple);
     }
 
-    private double calcCUSUM(ArrayList<Long> origSeriesOfSYN, ArrayList<Double> grayModelForecastedOutput) {
-        double fn = 0;
-        int size = origSeriesOfSYN.size();
-
-        double variance = calcVariance(origSeriesOfSYN);
-
-        if (variance != 0){
-            fn = origSeriesOfSYN.get(0);
-            for (int i = 1; i < size; i++) {
-                double tmp = origSeriesOfSYN.get(i) - grayModelForecastedOutput.get(i-1) - ALPHA/2 * grayModelForecastedOutput.get(i-1);
-                fn += ((ALPHA * grayModelForecastedOutput.get(i-1)/variance) * tmp);
-            }
-        }
-
-        return fn;
-    }
-
-    private double calcVariance(ArrayList<Long> origSeriesOfSYN) {
-        double variance = 0, sum = 0, avg = 0, tmp = 0;
-        int size = origSeriesOfSYN.size();
-
-        if (!origSeriesOfSYN.isEmpty()) {
-            // Calculate sum
-            for(int i = 0; i < size; i++) {
-                sum += origSeriesOfSYN.get(i);
-            }
-            // Calculate average
-            avg = sum / size;
-
-            // Calculate variance
-            for(int i = 0; i < size; i++) {
-                double diff = origSeriesOfSYN.get(i) - avg;
-                tmp += (diff * diff);
-            }
-            variance = tmp / size;
-        }
-
-        return variance;
-    }
-
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
-        declarer.declare(new Fields(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD,
+        declarer.declare(new Fields(AttackDetectionTopology.CUSUM_ACTUAL_SUM_OUTPUT_FIELD,
+                AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD,
                 AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }
@@ -107,10 +82,15 @@ class CumulativeSumAggregationGraphiteWriterBolt extends GraphiteWriterBoltBase 
     }
     @Override
     public void execute(Tuple input) {
-        Double cuSumValues = Double.parseDouble(input.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString());
+        Double cumulativeSumActual = Double.parseDouble(input.getValueByField(AttackDetectionTopology.CUSUM_ACTUAL_SUM_OUTPUT_FIELD).toString());
+        Double cumulativeSumForecast = Double.parseDouble(input.getValueByField(AttackDetectionTopology.CUSUM_GREY_SUM_OUTPUT_FIELD).toString());
+
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-//        LOG.info("Sending to graphite: (cumulativeSumValues, " + cuSumValues + ", " + timestamp + ")");
-        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumValues", GraphiteCodec.format(cuSumValues), timestamp);
+        LOG.info("Sending to graphite: (cumulativeSumActualValues : " + cumulativeSumActual + ", " +
+                "cumulativeSumGreyValues : " + cumulativeSumForecast + ", " + timestamp + ")");
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumActualValues", GraphiteCodec.format(cumulativeSumActual), timestamp);
+        super.sendToGraphite(super.GRAPHITE_PREFIX + ".cumulativeSumGreyValues", GraphiteCodec.format(cumulativeSumForecast), timestamp);
+
         super.collector.ack(input);
     }
 }

@@ -14,10 +14,10 @@ public class AttackDetectionTopology {
     private static final Logger LOG = Logger.getLogger(AttackDetectionTopology.class);
 
     private static final String ZOOKEEPER_HOSTS = "zookeeper1.kevinmao.com:2181";
-    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text2";
-    private static final int SPOUT_PARALLELISM = 2;
+    private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text4";
+    private static final int SPOUT_PARALLELISM = 4;
 
-    private static final int DECODER_BOLT_PARALLELISM = 20;
+    private static final int DECODER_BOLT_PARALLELISM = 16;
     public static final String DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD = "packetRecord";
 
     private static final int COUNTER_BOLT_PARALLELISM = 1;
@@ -30,7 +30,8 @@ public class AttackDetectionTopology {
     public static final String GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
 
     private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;
-    public static final String CUSUM_MODEL_SUM_OUTPUT_FIELD = "totalSum";
+    public static final String CUSUM_ACTUAL_SUM_OUTPUT_FIELD = "actualCuSum";
+    public static final String CUSUM_GREY_SUM_OUTPUT_FIELD = "greyCuSum";
 
     private static final int ATTACK_DETECTOR_BOLT_PARALLELISM = 1;
     private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 100.0;

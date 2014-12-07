@@ -32,7 +32,7 @@ public class AttackDetectorBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         collector.ack(tuple);
-        if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.CUSUM_MODEL_SUM_OUTPUT_FIELD).toString()) > detectionThreshold) {
+        if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.CUSUM_ACTUAL_SUM_OUTPUT_FIELD).toString()) > detectionThreshold) {
             LOG.info("Emitting value: " + new Values(true, timestamp));
             collector.emit(new Values(true, timestamp));
         } else {

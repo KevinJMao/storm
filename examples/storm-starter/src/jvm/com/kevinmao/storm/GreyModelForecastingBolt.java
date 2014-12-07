@@ -11,13 +11,10 @@ import com.kevinmao.graphite.GraphiteCodec;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
-import org.apache.commons.math3.linear.RealVector;
 import org.apache.log4j.Logger;
-import org.apache.commons.lang.ArrayUtils.*;
 
-import java.lang.Math;
-import java.util.Map;
 import java.util.ArrayList;
+import java.util.Map;
 
 public class GreyModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GreyModelForecastingBolt.class);
@@ -42,18 +39,14 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         this.collector = collector;
     }
 
-    @Override
-    public void execute(Tuple tuple) {
-
-        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
-        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-
+    public Values executeOnValuePair(Long actualPacketCount, Long timestamp) {
         actualInputValues_x0.add(Double.parseDouble(Long.toString(actualPacketCount)));
         accumulatedSum_x1.add((new Long(actualPacketCount)).doubleValue() + (accumulatedSum_x1.isEmpty() ? 0.0 : accumulatedSum_x1.get(accumulatedSum_x1.size() - 1)));
 
         //Have to bootstrap eqn7 by 1, calculate starting on the second value that comes in
         //The size of this list will subsequently be one smaller than the size of the actualInputValues list
         if(timeIndex >= 1) {
+            timeIndex++;
             int k = timeIndex - 1;
             double accumulatedSumDecayingAverage = (BACKGROUND_VALUE_P * accumulatedSum_x1.get(k)) +
                     ((1 - BACKGROUND_VALUE_P) * accumulatedSum_x1.get(k + 1));
@@ -65,10 +58,23 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
                 long emitActualOutputVolume = actualPacketCount;
                 long lastTimestampMeasured = timestamp;
 
-                collector.emit(new Values(emitForecast, emitActualOutputVolume, lastTimestampMeasured));
+                return new Values(emitForecast, emitActualOutputVolume, lastTimestampMeasured);
             }
         }
-        timeIndex++;
+        return null;
+    }
+
+    @Override
+    public void execute(Tuple tuple) {
+
+        long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
+        long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+        Values result = executeOnValuePair(actualPacketCount, timestamp);
+
+        if (result != null) {
+            collector.emit(result);
+        }
+
         collector.ack(tuple);
     }
 
