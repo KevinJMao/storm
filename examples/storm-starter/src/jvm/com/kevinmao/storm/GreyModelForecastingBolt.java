@@ -13,7 +13,9 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.log4j.Logger;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Map;
 
 public class GreyModelForecastingBolt extends BaseRichBolt {
@@ -21,15 +23,16 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
     private OutputCollector collector;
 
     private static final double BACKGROUND_VALUE_P = 0.5;
-    private ArrayList<Double> actualInputValues_x0;
-    private ArrayList<Double> accumulatedSum_x1;
-    private ArrayList<Double> forecastedAccumulatedSum_z1;
+    private ArrayDeque<Double> actualInputValues_x0;
+    private ArrayDeque<Double> accumulatedSum_x1;
+    private ArrayDeque<Double> forecastedAccumulatedSum_z1;
     private Integer timeIndex;
 
-    public GreyModelForecastingBolt() {
-        this.actualInputValues_x0 = new ArrayList<Double>();
-        this.accumulatedSum_x1 = new ArrayList<Double>();
-        this.forecastedAccumulatedSum_z1 = new ArrayList<Double>();
+    public GreyModelForecastingBolt(int sizeLimit) {
+        //The head (or first element) of the Deque is the most recent
+        this.actualInputValues_x0 = new ArrayDeque<Double>(sizeLimit);
+        this.accumulatedSum_x1 = new ArrayDeque<Double>(sizeLimit);
+        this.forecastedAccumulatedSum_z1 = new ArrayDeque<Double>(sizeLimit);
         timeIndex = 0;
     }
 
@@ -40,16 +43,18 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
     }
 
     public Values executeOnValuePair(Long actualPacketCount, Long timestamp) {
-        actualInputValues_x0.add(Double.parseDouble(Long.toString(actualPacketCount)));
-        accumulatedSum_x1.add((new Long(actualPacketCount)).doubleValue() + (accumulatedSum_x1.isEmpty() ? 0.0 : accumulatedSum_x1.get(accumulatedSum_x1.size() - 1)));
+        actualInputValues_x0.addFirst(Double.parseDouble(Long.toString(actualPacketCount)));
+        Double accumulatedSum = (new Long(actualPacketCount)).doubleValue() + (accumulatedSum_x1.isEmpty() ? 0.0 : accumulatedSum_x1.getFirst());
+        accumulatedSum_x1.addFirst(accumulatedSum);
 
         //Have to bootstrap eqn7 by 1, calculate starting on the second value that comes in
         //The size of this list will subsequently be one smaller than the size of the actualInputValues list
         if(timeIndex >= 1) {
             timeIndex++;
             int k = timeIndex - 1;
-            double accumulatedSumDecayingAverage = (BACKGROUND_VALUE_P * accumulatedSum_x1.get(k)) +
-                    ((1 - BACKGROUND_VALUE_P) * accumulatedSum_x1.get(k + 1));
+            Iterator<Double> iter = accumulatedSum_x1.iterator();
+            double accumulatedSumDecayingAverage = (BACKGROUND_VALUE_P * iter.next()) +
+                    ((1 - BACKGROUND_VALUE_P) * iter.next());
 
             forecastedAccumulatedSum_z1.add(accumulatedSumDecayingAverage);
 
@@ -93,9 +98,11 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         double[] matrixData = new double[forecastedAccumulatedSum_z1.size()];
 
         //We're pretty much hoping that the size of the actual input value is one entry larger than the forecasted accumulation z
-        for(int i = 1; i < actualInputValues_x0.size(); i++) {
-            matrixData[i - 1] = actualInputValues_x0.get(i);
+        int counter_x0 = 0;
+        for(Double x : actualInputValues_x0) {
+            matrixData[counter_x0] = x;
         }
+
         //Unsure of whether to use createColumnRealMatrix or columnRowMatrix
         return MatrixUtils.createColumnRealMatrix(matrixData);
     }
@@ -122,7 +129,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         Double a_coeff = a_b_coefficients.getEntry(0, 0);
         Double b_coeff = a_b_coefficients.getEntry(1, 0);
 
-        Double returnResult = Math.abs(greyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.get(0), timeIndex));
+        Double returnResult = greyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.getLast(), actualInputValues_x0.size());
 
         LOG.info("GREY MODEL RESULTS: (a : " + a_coeff + "),(b : " + b_coeff + "),(" + returnResult + ")");
         return returnResult;
