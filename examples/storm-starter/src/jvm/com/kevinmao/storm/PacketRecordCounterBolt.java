@@ -16,17 +16,17 @@ import java.util.Map;
 public class PacketRecordCounterBolt extends BaseRichBolt {
 
     private static final Logger LOG = Logger.getLogger(PacketRecordCounterBolt.class);
-    private double countingTimeWindow;
+    private Double countingTimeWindow;
     private OutputCollector collector;
-    private int timeIndex;
-    private long packetCount;
-    private double nextEmit;
-    private long lastRecordTimestampSeconds;
+    private Integer timeIndex;
+    private Long packetCount;
+    private Double nextEmit;
+    private Long lastRecordTimestampSeconds;
 
     public PacketRecordCounterBolt(double countingTimeWindow) {
         this.countingTimeWindow = countingTimeWindow;
         this.timeIndex = 1;
-        packetCount = 0;
+        packetCount = 0L;
         nextEmit = countingTimeWindow;
         lastRecordTimestampSeconds = AttackDetectionTopology.TOPOLOGY_START_TIME_MILLIS;
     }
@@ -52,10 +52,10 @@ public class PacketRecordCounterBolt extends BaseRichBolt {
         collector.ack(input);
         if(record.getTimestamp() >= nextEmit) {
 //            LOG.info("Emitting values: (timeIndex : " + timeIndex + "),(packetCount : " + packetCount + "),(lastRecordTimestampSeconds : " + lastRecordTimestampSeconds + ")");
-            collector.emit(new Values(timeIndex, packetCount, lastRecordTimestampSeconds));
+            collector.emit(new Values(timeIndex, packetCount.doubleValue(), lastRecordTimestampSeconds));
             timeIndex++;
             nextEmit += countingTimeWindow;
-            packetCount = 0;
+            packetCount = 0L;
         } else {
             packetCount++;
             Long timestampOffsetMillis = (long) (record.getTimestamp() * 1000.0);

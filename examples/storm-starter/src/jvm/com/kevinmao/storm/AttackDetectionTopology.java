@@ -29,6 +29,7 @@ public class AttackDetectionTopology {
     public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
     public static final String GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
     public static final int GREY_MODEL_MAX_SAMPLE_COUNT = 20;
+    public static final int GREY_MODEL_LOOKAHEAD = 2;
 
 
     private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;
@@ -97,7 +98,7 @@ public class AttackDetectionTopology {
         builder.setBolt(COUNTER_BOLT_GRAPHITE_ID, counterBoltGraphiteWriter, GRAPHITE_WRITER_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         //Grey Model Forecasting Bolt Configuration
-        GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt(GREY_MODEL_MAX_SAMPLE_COUNT);
+        GreyModelForecastingBolt greyModelBolt = new GreyModelForecastingBolt(GREY_MODEL_MAX_SAMPLE_COUNT, GREY_MODEL_LOOKAHEAD);
         builder.setBolt(GREY_MODEL_BOLT_ID, greyModelBolt, GREY_MODEL_BOLT_PARALLELISM).localOrShuffleGrouping(COUNTER_BOLT_ID);
 
         GreyModelForecastingGraphiteWriterBolt grayModelGraphiteBolt =

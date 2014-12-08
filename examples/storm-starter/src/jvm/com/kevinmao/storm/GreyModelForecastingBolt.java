@@ -25,15 +25,15 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
     private ArrayDeque<Double> actualInputValues_x0;
     private ArrayDeque<Double> accumulatedSum_x1;
     private ArrayDeque<Double> forecastedAccumulatedSum_z1;
-    private int maxDequeSize;
     private Integer timeIndex;
+    private Integer forecastAhead;
 
-    public GreyModelForecastingBolt(int dequeLimit) {
+    public GreyModelForecastingBolt(int dequeSize, int forecastAhead) {
+        this.forecastAhead = forecastAhead;
         //The head (or first element) of the Deque is the most recent
-        this.maxDequeSize = dequeLimit;
-        this.actualInputValues_x0 = new ArrayDeque<Double>(dequeLimit);
-        this.accumulatedSum_x1 = new ArrayDeque<Double>(dequeLimit);
-        this.forecastedAccumulatedSum_z1 = new ArrayDeque<Double>(dequeLimit);
+        this.actualInputValues_x0 = new ArrayDeque<Double>(dequeSize);
+        this.accumulatedSum_x1 = new ArrayDeque<Double>(dequeSize);
+        this.forecastedAccumulatedSum_z1 = new ArrayDeque<Double>(dequeSize);
         timeIndex = 0;
     }
 
@@ -159,7 +159,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         Double a_coeff = a_b_coefficients.getEntry(0, 0);
         Double b_coeff = a_b_coefficients.getEntry(1, 0);
 
-        Double returnResult = cumulativeGreyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.getLast(), timeIndex);
+        Double returnResult = greyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.getLast(), timeIndex);
 
         LOG.info("GREY MODEL RESULTS: (a : " + a_coeff + "),(b : " + b_coeff + "),(" + returnResult + ")");
         return returnResult;
@@ -172,7 +172,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
         Double term1 = 1.0 - java.lang.Math.exp(a);
         Double term2 = (rawValue - (b / a));
-        Double term3 = java.lang.Math.exp(-1.0 * a * timeIndex);
+        Double term3 = java.lang.Math.exp(-1.0 * a * (timeIndex + forecastAhead));
 
         LOG.info("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");
         return (term1 * term2 * term3);
@@ -184,7 +184,7 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         assert(!rawValue.isNaN() && !rawValue.isInfinite() && rawValue != null);
 
         Double term1 = (rawValue - (b / a));
-        Double term2 = java.lang.Math.exp(-1.0 * a * timeIndex);
+        Double term2 = java.lang.Math.exp(-1.0 * a * (timeIndex + forecastAhead));
         Double term3 = b / a;
 
         LOG.info("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");

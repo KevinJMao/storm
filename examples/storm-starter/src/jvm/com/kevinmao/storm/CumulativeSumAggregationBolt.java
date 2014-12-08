@@ -36,7 +36,7 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         LOG.debug("Apply CUSUM algorithm to detect SYN flooding attack");
 
-        Long actualPacketCount = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
+        Double actualPacketCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD).toString());
 
         Double greyForecastedCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
 
@@ -48,13 +48,11 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
             actualPacketCount_CUSUM.update(actualPacketCount.doubleValue());
         }
 
-        if(greyForecastedCount == null) {
+        if(greyForecasted_CUSUM == null) {
             greyForecasted_CUSUM = new CumulativeSum(greyForecastedCount, ALPHA, LAMBDA);
         } else {
             greyForecasted_CUSUM.update(greyForecastedCount);
         }
-
-
 
         collector.emit(new Values(actualPacketCount_CUSUM.getCumulativeSum(),
                 greyForecasted_CUSUM.getCumulativeSum(),

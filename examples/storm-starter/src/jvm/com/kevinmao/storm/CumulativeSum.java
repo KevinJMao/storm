@@ -16,8 +16,9 @@ public class CumulativeSum {
         this.exponentiallyWeightedAverage = initialValue;
         this.alpha = alpha;
         this.lambda = lambda;
-        this.cumulativeSum = initialValue;
+        this.cumulativeSum = 0.0;
         this.runningVariance = new Variance();
+        this.runningVariance.increment(initialValue);
     }
 
     public Double update(Double nextValue) {
@@ -30,7 +31,7 @@ public class CumulativeSum {
 
         //Cumulative sum
         double cusum_termA = (alpha / runningVariance.getResult()) * exponentiallyWeightedAverage;
-        double cusum_termB = (nextValue - (exponentiallyWeightedAverage * (alpha / 2) * exponentiallyWeightedAverage));
+        double cusum_termB = (nextValue - (alpha / 2) * exponentiallyWeightedAverage);
 
         cumulativeSum = cumulativeSum + (cusum_termA * cusum_termB);
         return cumulativeSum;
