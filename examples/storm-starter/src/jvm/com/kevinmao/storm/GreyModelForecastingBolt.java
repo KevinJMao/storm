@@ -39,13 +39,14 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
         if(greyModelSizeCounter++ > AttackDetectionTopology.GREY_MODEL_MAX_SAMPLE_COUNT) {
             forecast = new GreyModelForecast(dequeSize, forecastAhead);
+            greyModelSizeCounter = 0;
         }
 
         forecast.update(actualPacketCount, timestamp);
 
         Double forecastedValue = forecast.getForecast();
         if (forecastedValue != Double.NaN) {
-            LOG.info("Emitting (forecastedValue : " + forecastedValue + ", actualPacketCount : " + actualPacketCount +", timestamp : " + timestamp + ")");
+            LOG.debug("Emitting (forecastedValue : " + forecastedValue + ", actualPacketCount : " + actualPacketCount +", timestamp : " + timestamp + ")");
             collector.emit(new Values(forecastedValue, actualPacketCount, timestamp));
         }
         collector.ack(tuple);
@@ -68,7 +69,7 @@ class GreyModelForecastingGraphiteWriterBolt extends GraphiteWriterBoltBase {
     public void execute(Tuple input) {
         Double greyForecastedValue = Double.parseDouble(input.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString());
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-//        LOG.info("Sending to graphite: (greyForecastedVolume, " + greyForecastedValue + ", " + timestamp + ")");
+        LOG.info("Sending to graphite: (greyForecastedVolume, " + greyForecastedValue + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".greyForecastedVolume", GraphiteCodec.format(greyForecastedValue), timestamp);
         super.collector.ack(input);
     }

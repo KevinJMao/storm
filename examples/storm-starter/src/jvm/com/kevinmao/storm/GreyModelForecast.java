@@ -5,10 +5,11 @@ import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
 import org.apache.log4j.Logger;
 
+import java.io.Serializable;
 import java.util.ArrayDeque;
 import java.util.Iterator;
 
-public class GreyModelForecast {
+public class GreyModelForecast implements Serializable{
     private ArrayDeque<Double> actualInputValues_x0;
     private ArrayDeque<Double> accumulatedSum_x1;
     private ArrayDeque<Double> forecastedAccumulatedSum_z1;
@@ -45,9 +46,9 @@ public class GreyModelForecast {
         accumulatedSum_x1.addFirst(accumulatedSum);
 //        if(accumulatedSum_x1.size() > maxDequeSize) { accumulatedSum_x1.removeLast(); }
 
-        LOG.info("ACTUAL PACKET COUNT: " + actualPacketCount);
-        LOG.info("ACTUAL PACKET COUNT ARRAY" + actualInputValues_x0);
-        LOG.info("ACCUMULATED SUM ARRAY" + accumulatedSum_x1);
+        LOG.debug("ACTUAL PACKET COUNT: " + actualPacketCount);
+        LOG.debug("ACTUAL PACKET COUNT ARRAY" + actualInputValues_x0);
+        LOG.debug("ACCUMULATED SUM ARRAY" + accumulatedSum_x1);
 
         //Have to bootstrap eqn7 by 1, calculate starting on the second value that comes in
         //The size of this list will subsequently be one smaller than the size of the actualInputValues list
@@ -60,7 +61,7 @@ public class GreyModelForecast {
             forecastedAccumulatedSum_z1.addFirst(accumulatedSumDecayingAverage);
 //            if(forecastedAccumulatedSum_z1.size() > maxDequeSize) { forecastedAccumulatedSum_z1.removeLast(); }
 
-            LOG.info("ACCUMULATED SUM MOVING AVERAGE ARRAY: " + forecastedAccumulatedSum_z1);
+            LOG.debug("ACCUMULATED SUM MOVING AVERAGE ARRAY: " + forecastedAccumulatedSum_z1);
         }
         timeIndex++;
     }
@@ -99,20 +100,20 @@ public class GreyModelForecast {
         RealMatrix B = generateMatrix_B();
         RealMatrix Yn = generateMatrix_Yn();
 
-        LOG.info("Matrix B is " + B.toString());
-        LOG.info("Matrix Yn is " + Yn.toString());
+        LOG.debug("Matrix B is " + B.toString());
+        LOG.debug("Matrix Yn is " + Yn.toString());
 
         RealMatrix B_transpose = B.transpose();
-        LOG.info("Matrix B_transpose is " + B_transpose);
+        LOG.debug("Matrix B_transpose is " + B_transpose);
 
         RealMatrix B_transpose__mult__B = B_transpose.multiply(B);
-        LOG.info("Matrix Btrans_mult_B is " + B_transpose__mult__B);
+        LOG.debug("Matrix Btrans_mult_B is " + B_transpose__mult__B);
 
         RealMatrix inverseOf__B__mult__B_transpose = new LUDecomposition(B_transpose__mult__B).getSolver().getInverse();
-        LOG.info("Matrix inverseOf_Btrans_mult_B is " + inverseOf__B__mult__B_transpose);
+        LOG.debug("Matrix inverseOf_Btrans_mult_B is " + inverseOf__B__mult__B_transpose);
 
         RealMatrix B_transpose__mult__Yn = B_transpose.multiply(Yn);
-        LOG.info("Matrix B_transpose__mult__Yn is " + B_transpose__mult__Yn);
+        LOG.debug("Matrix B_transpose__mult__Yn is " + B_transpose__mult__Yn);
 
 
 
@@ -121,13 +122,13 @@ public class GreyModelForecast {
 
         RealMatrix a_b_coefficients = inverseOf__B__mult__B_transpose.multiply(B_transpose__mult__Yn);
 
-        LOG.info(("GREY MODEL COEFFICIENT MATRIX: " + a_b_coefficients.toString()));
+        LOG.debug(("GREY MODEL COEFFICIENT MATRIX: " + a_b_coefficients.toString()));
         Double a_coeff = a_b_coefficients.getEntry(0, 0);
         Double b_coeff = a_b_coefficients.getEntry(1, 0);
 
         Double returnResult = greyForecastingEquation(a_coeff, b_coeff, actualInputValues_x0.getLast(), timeIndex);
 
-        LOG.info("GREY MODEL RESULTS: (a : " + a_coeff + "),(b : " + b_coeff + "),(" + returnResult + ")");
+        LOG.debug("GREY MODEL RESULTS: (a : " + a_coeff + "),(b : " + b_coeff + "),(" + returnResult + ")");
         return returnResult;
     }
 
@@ -140,7 +141,7 @@ public class GreyModelForecast {
         Double term2 = (rawValue - (b / a));
         Double term3 = java.lang.Math.exp(-1.0 * a * (timeIndex + forecastAhead));
 
-        LOG.info("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");
+        LOG.debug("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");
         return (term1 * term2 * term3);
     }
 
@@ -153,7 +154,7 @@ public class GreyModelForecast {
         Double term2 = java.lang.Math.exp(-1.0 * a * (timeIndex + forecastAhead));
         Double term3 = b / a;
 
-        LOG.info("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");
+        LOG.debug("GREY MODEL TERMS: (term1 : " + term1 + "),(term2 : " + term2 + "),(term3 : " + term3 + ")");
         return ((term1 * term2) + term3);
     }
 

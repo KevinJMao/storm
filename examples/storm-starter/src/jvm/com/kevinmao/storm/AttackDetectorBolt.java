@@ -32,11 +32,11 @@ public class AttackDetectorBolt extends BaseRichBolt {
     public void execute(Tuple tuple) {
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
         collector.ack(tuple);
-        if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD).toString()) > detectionThreshold) {
-            LOG.info("Emitting value: " + new Values(true, timestamp));
+        if(Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.CUSUM_GREY_SUM_OUTPUT_FIELD).toString()) > detectionThreshold) {
+            LOG.debug("Emitting value: " + new Values(true, timestamp));
             collector.emit(new Values(true, timestamp));
         } else {
-            LOG.info("Emitting value:" + new Values(true, timestamp));
+            LOG.debug("Emitting value:" + new Values(true, timestamp));
             collector.emit(new Values(false, timestamp));
         }
     }
@@ -59,7 +59,7 @@ class AttackDetectorGraphiteWriterBolt extends GraphiteWriterBoltBase {
         boolean attackDetector = Boolean.parseBoolean(input.getValueByField(AttackDetectionTopology.ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD).toString());
         Long attackValue = attackDetector ? -100L : 100L;
         Long timestamp = Long.parseLong(input.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
-//        LOG.info("Sending to graphite: (attackDetector, " + attackValue + ", " + timestamp + ")");
+        LOG.debug("Sending to graphite: (attackDetector, " + attackValue + ", " + timestamp + ")");
         super.sendToGraphite(super.GRAPHITE_PREFIX + ".attackDetectionValue", GraphiteCodec.format(attackValue), timestamp);
         super.collector.ack(input);
     }

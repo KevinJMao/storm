@@ -43,9 +43,9 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         Long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
 
         if(actualPacketCount_CUSUM == null) {
-            actualPacketCount_CUSUM = new CumulativeSum(actualPacketCount.doubleValue(), ALPHA, LAMBDA);
+            actualPacketCount_CUSUM = new CumulativeSum(actualPacketCount, ALPHA, LAMBDA);
         } else {
-            actualPacketCount_CUSUM.update(actualPacketCount.doubleValue());
+            actualPacketCount_CUSUM.update(actualPacketCount);
         }
 
         if(greyForecasted_CUSUM == null) {
@@ -57,7 +57,7 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         collector.emit(new Values(actualPacketCount_CUSUM.getCumulativeSum(),
                 greyForecasted_CUSUM.getCumulativeSum(),
                 timestamp));
-        LOG.info("Emitting values: (actual count CUSUM : " + actualPacketCount_CUSUM.getCumulativeSum() +
+        LOG.debug("Emitting values: (actual count CUSUM : " + actualPacketCount_CUSUM.getCumulativeSum() +
                 "),(grey count CUSUM : " + greyForecasted_CUSUM.getCumulativeSum() +
                 "),(timestamp : " + timestamp + ")");
 
@@ -67,7 +67,7 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
     @Override
     public void declareOutputFields(OutputFieldsDeclarer declarer) {
         declarer.declare(new Fields(AttackDetectionTopology.CUSUM_ACTUAL_SUM_OUTPUT_FIELD,
-                AttackDetectionTopology.GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD,
+                AttackDetectionTopology.CUSUM_GREY_SUM_OUTPUT_FIELD,
                 AttackDetectionTopology.LAST_TIMESTAMP_MEASURED));
     }
 }

@@ -2,7 +2,9 @@ package com.kevinmao.storm;
 
 import org.apache.commons.math3.stat.descriptive.moment.Variance;
 
-public class CumulativeSum {
+import java.io.Serializable;
+
+public class CumulativeSum implements Serializable {
 
     private Double lambda;
     private Double alpha;
