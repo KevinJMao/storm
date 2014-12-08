@@ -28,8 +28,8 @@ public class AttackDetectionTopology {
     private static final int GREY_MODEL_BOLT_PARALLELISM = 1;
     public static final String GREY_MODEL_FORECASTED_VOLUME_OUTPUT_FIELD = "forecastedVolume";
     public static final String GREY_MODEL_ACTUAL_VOLUME_OUTPUT_FIELD = "actualVolume";
-    public static final int GREY_MODEL_MAX_SAMPLE_COUNT = 20;
-    public static final int GREY_MODEL_LOOKAHEAD = 2;
+    public static final int GREY_MODEL_MAX_SAMPLE_COUNT = 60;
+    public static final int GREY_MODEL_LOOKAHEAD = 4;
 
 
     private static final int CUSUM_MODEL_BOLT_PARALLELISM = 1;

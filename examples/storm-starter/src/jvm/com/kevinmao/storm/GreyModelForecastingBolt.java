@@ -15,10 +15,13 @@ import java.util.Map;
 public class GreyModelForecastingBolt extends BaseRichBolt {
     private static final Logger LOG = Logger.getLogger(GreyModelForecastingBolt.class);
     private OutputCollector collector;
-
+    private int dequeSize, forecastAhead;
     private GreyModelForecast forecast;
+    private int greyModelSizeCounter = 0;
 
     public GreyModelForecastingBolt(int dequeSize, int forecastAhead) {
+        this.dequeSize = dequeSize;
+        this.forecastAhead = forecastAhead;
         this.forecast = new GreyModelForecast(dequeSize, forecastAhead);
     }
 
@@ -33,6 +36,11 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
 
         Double actualPacketCount = Double.parseDouble(tuple.getValueByField(AttackDetectionTopology.COUNTER_BOLT_PACKET_COUNT_FIELD).toString());
         long timestamp = Long.parseLong(tuple.getValueByField(AttackDetectionTopology.LAST_TIMESTAMP_MEASURED).toString());
+
+        if(greyModelSizeCounter++ > AttackDetectionTopology.GREY_MODEL_MAX_SAMPLE_COUNT) {
+            forecast = new GreyModelForecast(dequeSize, forecastAhead);
+        }
+
         forecast.update(actualPacketCount, timestamp);
 
         Double forecastedValue = forecast.getForecast();
