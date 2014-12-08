@@ -37,7 +37,7 @@ public class AttackDetectionTopology {
     public static final String CUSUM_GREY_SUM_OUTPUT_FIELD = "greyCuSum";
 
     private static final int ATTACK_DETECTOR_BOLT_PARALLELISM = 1;
-    private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 100.0;
+    private static final double ATTACK_DETECTOR_BOLT_DETECTION_THRESHOLD_VALUE = 1000.0;
     public static final String ATTACK_DETECTOR_DETECTION_OUTPUT_FIELD = "attackDetected";
 
     private static final int GRAPHITE_WRITER_BOLT_PARALLELISM = 1;
