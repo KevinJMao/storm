@@ -3,6 +3,7 @@ package com.kevinmao.storm;
 import org.apache.commons.math3.linear.LUDecomposition;
 import org.apache.commons.math3.linear.MatrixUtils;
 import org.apache.commons.math3.linear.RealMatrix;
+import org.apache.commons.math3.linear.SingularMatrixException;
 import org.apache.log4j.Logger;
 
 import java.io.Serializable;
@@ -31,10 +32,16 @@ public class GreyModelForecast implements Serializable{
     public Double getForecast() {
         //If we haven't compiled enough data to make an accurate prediction, don't give an answer
         if(timeIndex >= 3) {
-            return decayingAverageCalculation_Eq7();
+            try {
+                Double forecast = decayingAverageCalculation_Eq7();
+                return forecast;
+            } catch (SingularMatrixException sme) {
+                LOG.error("Received SingularMatrixException when attempting to invert matrix: " + sme.getMessage());
+                return null;
+            }
         }
         else {
-            return Double.NaN;
+            return null;
         }
     }
 
@@ -122,7 +129,7 @@ public class GreyModelForecast implements Serializable{
 
         RealMatrix a_b_coefficients = inverseOf__B__mult__B_transpose.multiply(B_transpose__mult__Yn);
 
-        LOG.debug(("GREY MODEL COEFFICIENT MATRIX: " + a_b_coefficients.toString()));
+        LOG.info(("GREY MODEL COEFFICIENT MATRIX: " + a_b_coefficients.toString()));
         Double a_coeff = a_b_coefficients.getEntry(0, 0);
         Double b_coeff = a_b_coefficients.getEntry(1, 0);
 

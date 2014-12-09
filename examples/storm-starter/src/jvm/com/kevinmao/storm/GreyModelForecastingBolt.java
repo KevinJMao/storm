@@ -45,8 +45,8 @@ public class GreyModelForecastingBolt extends BaseRichBolt {
         forecast.update(actualPacketCount, timestamp);
 
         Double forecastedValue = forecast.getForecast();
-        if (forecastedValue != Double.NaN) {
-            LOG.debug("Emitting (forecastedValue : " + forecastedValue + ", actualPacketCount : " + actualPacketCount +", timestamp : " + timestamp + ")");
+        if (forecastedValue != null && !forecastedValue.isNaN() && forecastedValue >= 0.0) {
+            LOG.info("Emitting (forecastedValue : " + forecastedValue + ", actualPacketCount : " + actualPacketCount +", timestamp : " + timestamp + ")");
             collector.emit(new Values(forecastedValue, actualPacketCount, timestamp));
         }
         collector.ack(tuple);

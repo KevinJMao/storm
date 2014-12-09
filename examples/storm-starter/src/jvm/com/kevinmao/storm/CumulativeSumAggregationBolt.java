@@ -45,19 +45,27 @@ public class CumulativeSumAggregationBolt extends BaseRichBolt {
         if(actualPacketCount_CUSUM == null) {
             actualPacketCount_CUSUM = new CumulativeSum(actualPacketCount, ALPHA, LAMBDA);
         } else {
-            actualPacketCount_CUSUM.update(actualPacketCount);
+            if(actualPacketCount >= 0.0 && !actualPacketCount.isNaN()) {
+                actualPacketCount_CUSUM.update(actualPacketCount);
+            } else {
+                LOG.warn("Received invalid actual packet count value.");
+            }
         }
 
         if(greyForecasted_CUSUM == null) {
             greyForecasted_CUSUM = new CumulativeSum(greyForecastedCount, ALPHA, LAMBDA);
         } else {
-            greyForecasted_CUSUM.update(greyForecastedCount);
+            if(greyForecastedCount >= 0.0 && !greyForecastedCount.isNaN()) {
+                greyForecasted_CUSUM.update(greyForecastedCount);
+            } else {
+                LOG.warn("Received invalid grey forecasted packet count value.");
+            }
         }
 
         collector.emit(new Values(actualPacketCount_CUSUM.getCumulativeSum(),
                 greyForecasted_CUSUM.getCumulativeSum(),
                 timestamp));
-        LOG.debug("Emitting values: (actual count CUSUM : " + actualPacketCount_CUSUM.getCumulativeSum() +
+        LOG.info("Emitting values: (actual count CUSUM : " + actualPacketCount_CUSUM.getCumulativeSum() +
                 "),(grey count CUSUM : " + greyForecasted_CUSUM.getCumulativeSum() +
                 "),(timestamp : " + timestamp + ")");
 

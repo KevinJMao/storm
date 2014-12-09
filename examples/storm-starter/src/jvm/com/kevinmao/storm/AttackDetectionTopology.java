@@ -17,7 +17,7 @@ public class AttackDetectionTopology {
     private static final String SPOUT_INPUT_KAFKA_TOPIC = "ddos.tovictim.text4";
     private static final int SPOUT_PARALLELISM = 4;
 
-    private static final int DECODER_BOLT_PARALLELISM = 16;
+    private static final int DECODER_BOLT_PARALLELISM = 4;
     public static final String DECODER_BOLT_PACKET_RECORD_OUTPUT_FIELD = "packetRecord";
 
     private static final int COUNTER_BOLT_PARALLELISM = 1;
